@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* CalWood Design System — based on Stitch output */
+
+@theme {
+  --color-primary: #144227;
+  --color-primary-container: #2d5a3d;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #9ed0ab;
+  --color-secondary: #7a5900;
+  --color-secondary-container: #fdce6c;
+  --color-on-secondary: #ffffff;
+  --color-tertiary: #5c2b33;
+  --color-tertiary-container: #774149;
+  --color-surface: #f9faf5;
+  --color-surface-dim: #d9dad6;
+  --color-surface-container: #edeeea;
+  --color-surface-container-low: #f3f4ef;
+  --color-surface-container-high: #e7e9e4;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-surface: #1a1c1a;
+  --color-on-surface-variant: #414942;
+  --color-outline: #717971;
+  --color-outline-variant: #c1c9c0;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --font-sans: 'Rubik', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Rubik', system-ui, sans-serif;
+  background: #f9faf5;
+  color: #1a1c1a;
+  direction: rtl;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea, a {
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-size: 16px;
+}
+
+button, a, input, select, textarea {
+  min-height: 44px;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c1c9c0; border-radius: 3px; }
