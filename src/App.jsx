@@ -13,13 +13,7 @@ import Onboarding from './pages/Onboarding'
 function LoginBox() {
   const [mode, setMode] = useState('signin')
   return (
-    <div className="w-full max-w-sm bg-white rounded-3xl shadow-lg p-8">
-      <h2 className="text-xl font-bold text-[#1a1c1a] text-center mb-2">
-        {mode === 'signin' ? 'כניסה למערכת' : 'הרשמה'}
-      </h2>
-      <p className="text-sm text-[#717971] text-center mb-6">
-        {mode === 'signin' ? 'התחבר כדי לנהל את הפרויקטים שלך' : 'צור חשבון חדש בחינם'}
-      </p>
+    <div className="w-full max-w-sm">
       {mode === 'signin' ? <SignIn routing="hash" /> : <SignUp routing="hash" />}
       <button onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
         className="w-full text-center text-sm text-[#2d5a3d] font-bold mt-4 py-2">
