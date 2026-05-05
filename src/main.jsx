@@ -24,10 +24,13 @@ createRoot(document.getElementById('root')).render(
           fontFamily: 'Rubik, system-ui, sans-serif',
         },
         elements: {
-          card: { boxShadow: 'none', border: 'none' },
+          rootBox: { width: '100%' },
+          card: { boxShadow: 'none', border: 'none', background: 'transparent', padding: '0' },
           headerTitle: { display: 'none' },
           headerSubtitle: { display: 'none' },
           footer: { display: 'none' },
+          socialButtonsProviderIcon__apple: { display: 'none' },
+          socialButtonsProviderIcon__github: { display: 'none' },
           formButtonPrimary: {
             backgroundColor: '#2d5a3d',
             borderRadius: '12px',
