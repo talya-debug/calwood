@@ -24,8 +24,8 @@ createRoot(document.getElementById('root')).render(
           fontFamily: 'Rubik, system-ui, sans-serif',
         },
         elements: {
-          rootBox: { width: '100%', maxWidth: '380px' },
-          card: { boxShadow: 'none', border: 'none', background: 'transparent', padding: '0', margin: '0' },
+          rootBox: { width: '100%' },
+          card: { boxShadow: 'none', border: 'none', background: '#ffffff', padding: '0', margin: '0' },
           main: { gap: '12px' },
           headerTitle: { display: 'none' },
           headerSubtitle: { display: 'none' },

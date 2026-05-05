@@ -54,31 +54,9 @@ button, a, input, select, textarea {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #c1c9c0; border-radius: 3px; }
 
-/* Clerk — מסיר כרטיס כפול */
-.cl-card,
-.cl-signIn-root .cl-card,
-.cl-signUp-root .cl-card,
-.cl-rootBox .cl-card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-  padding: 0 !important;
-}
-.cl-internal-b3fm6y {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-.cl-signIn-root,
-.cl-signUp-root {
-  background: transparent !important;
-}
-/* כפתור ראשי ירוק */
-.cl-formButtonPrimary {
-  background-color: #2d5a3d !important;
-  border-radius: 12px !important;
-}
-/* מסתיר footer של Clerk */
-.cl-footerAction,
-.cl-footer {
-  display: none !important;
-}
+/* Clerk — לבן בתוך לבן, בלי shadow */
+.cl-card { background: #fff !important; box-shadow: none !important; border: none !important; padding: 0 !important; }
+.cl-footer, .cl-footerAction { display: none !important; }
+.cl-headerTitle, .cl-headerSubtitle { display: none !important; }
+.cl-formButtonPrimary { background-color: #2d5a3d !important; border-radius: 12px !important; }
+.cl-internal-b3fm6y { background: #fff !important; box-shadow: none !important; }

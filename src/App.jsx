@@ -13,10 +13,18 @@ import Onboarding from './pages/Onboarding'
 function LoginBox() {
   const [mode, setMode] = useState('signin')
   return (
-    <div className="w-full max-w-sm">
-      {mode === 'signin' ? <SignIn routing="hash" /> : <SignUp routing="hash" />}
+    <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm">
+      <h2 className="text-lg font-bold text-[#1a1c1a] text-center mb-1">
+        {mode === 'signin' ? 'כניסה למערכת' : 'הרשמה חינם'}
+      </h2>
+      <p className="text-xs text-[#717971] text-center mb-4">
+        {mode === 'signin' ? 'התחבר כדי לנהל את הפרויקטים שלך' : 'צור חשבון חדש'}
+      </p>
+      <div className="[&_.cl-card]:!bg-white [&_.cl-card]:!shadow-none [&_.cl-card]:!border-none [&_.cl-card]:!p-0 [&_.cl-footer]:!hidden [&_.cl-headerTitle]:!hidden [&_.cl-headerSubtitle]:!hidden [&_.cl-internal-b3fm6y]:!bg-white [&_.cl-internal-b3fm6y]:!shadow-none">
+        {mode === 'signin' ? <SignIn routing="hash" /> : <SignUp routing="hash" />}
+      </div>
       <button onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-        className="w-full text-center text-sm text-[#2d5a3d] font-bold mt-4 py-2">
+        className="w-full text-center text-sm text-[#2d5a3d] font-bold mt-3 py-2">
         {mode === 'signin' ? 'אין לך חשבון? הירשם בחינם' : 'יש לך חשבון? התחבר'}
       </button>
     </div>
