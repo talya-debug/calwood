@@ -107,9 +107,9 @@ export default function Onboarding() {
             </div>
 
             <LabelInput label="שם העסק" value={profile.business_name} onChange={v => updateProfile('business_name', v)}
-              placeholder="למשל: יוסי כהן — עבודות עץ" />
+              placeholder="שם העסק שיופיע בהצעות" />
             <LabelInput label="שם בעל העסק" value={profile.owner_name} onChange={v => updateProfile('owner_name', v)}
-              placeholder="השם שיופיע בחתימה" />
+              placeholder="שם מלא" />
             <div className="grid grid-cols-2 gap-3">
               <LabelInput label="טלפון" value={profile.phone} onChange={v => updateProfile('phone', v)} placeholder="050-0000000" />
               <LabelInput label="אימייל" value={profile.email} onChange={v => updateProfile('email', v)} placeholder="you@email.com" />
@@ -135,22 +135,22 @@ export default function Onboarding() {
             </div>
 
             <LabelInput label="תעריף שעתי שלך (₪)" value={profile.hourly_rate} onChange={v => updateProfile('hourly_rate', v)}
-              type="number" placeholder="250"
-              tip="כמה אתה מחשב לשעת עבודה שלך? 250 ₪ זה ממוצע בשוק." />
+              type="number" placeholder=""
+              tip="כמה אתה מחשב לשעת עבודה שלך?" />
 
             <LabelInput label="עלות עוזר ליום (₪)" value={profile.helper_daily} onChange={v => updateProfile('helper_daily', v)}
-              type="number" placeholder="900"
-              tip="כמה עולה לך עוזר ליום עבודה? עוזר רגיל ~900, מקצועי ~1,300." />
+              type="number" placeholder=""
+              tip="כמה עולה לך עוזר ליום עבודה?" />
 
             <div className="grid grid-cols-3 gap-3">
               <LabelInput label="תקורה %" value={profile.overhead_pct} onChange={v => updateProfile('overhead_pct', v)}
-                type="number" placeholder="5" />
+                type="number" placeholder="" />
               <LabelInput label="ביטחון %" value={profile.safety_pct} onChange={v => updateProfile('safety_pct', v)}
-                type="number" placeholder="5" />
+                type="number" placeholder="" />
               <LabelInput label="רווח %" value={profile.profit_pct} onChange={v => updateProfile('profit_pct', v)}
-                type="number" placeholder="20" />
+                type="number" placeholder="" />
             </div>
-            <Tip text="תקורה = רכב, כלים, ביטוח (5% רגיל). ביטחון = כרית למקרה שמשהו עולה יותר. רווח = 20% ממוצע בשוק." />
+            <Tip text="תקורה = הוצאות קבועות שלך (רכב, כלים, ביטוח). ביטחון = כרית למקרה של חריגה. רווח = האחוז שאתה רוצה להרוויח." />
 
             <button onClick={next}
               className="w-full h-14 bg-[#2d5a3d] text-white rounded-xl font-bold text-lg shadow-md hover:brightness-110 transition flex items-center justify-center gap-2">
@@ -181,33 +181,46 @@ export default function Onboarding() {
               type="number" placeholder="0"
               tip="אם יש לך הנחה קבועה מהספק — הכנס אחוז. היא תחושב על כל מוצרי העץ." />
 
-            {/* חומרים עיקריים */}
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+            {/* חומרים עיקריים — מחיר + מידות לעריכה */}
+            <div className="space-y-4 max-h-80 overflow-y-auto">
               {mainCategories.map(cat => {
                 const items = materials.filter(m => m.category === cat)
                 if (items.length === 0) return null
                 return (
                   <div key={cat}>
-                    <div className="text-xs font-bold text-[#2d5a3d] mb-1 uppercase tracking-wider">{cat}</div>
+                    <div className="text-xs font-bold text-[#2d5a3d] mb-2 uppercase tracking-wider border-b border-[#e7e9e4] pb-1">{cat}</div>
                     {items.map(mat => (
-                      <div key={mat.id} className="flex items-center justify-between bg-[#f3f4ef] rounded-lg p-2.5 mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <input type="number" step="0.01" value={mat.price_per_unit}
-                            onChange={e => updateMaterial(mat.id, 'price_per_unit', Number(e.target.value))}
-                            className="w-16 h-8 px-2 border border-[#c1c9c0] rounded-lg text-sm font-bold bg-[#fdce6c]/20 text-center focus:border-[#2d5a3d] outline-none" />
-                          <span className="text-[10px] text-[#717971]">₪/מ'</span>
+                      <div key={mat.id} className="bg-[#f3f4ef] rounded-xl p-3 mb-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="bg-[#fdce6c] px-3 py-1 rounded-lg">
+                            <input type="number" step="0.01" value={mat.price_per_unit}
+                              onChange={e => updateMaterial(mat.id, 'price_per_unit', Number(e.target.value))}
+                              className="w-14 h-6 bg-transparent text-sm font-bold text-[#7a5900] text-center outline-none" />
+                            <span className="text-[10px] text-[#7a5900]">₪</span>
+                          </div>
+                          <div className="text-right">
+                            <input value={mat.name} onChange={e => updateMaterial(mat.id, 'name', e.target.value)}
+                              className="text-sm font-bold text-[#1a1c1a] bg-transparent border-b border-transparent hover:border-[#c1c9c0] focus:border-[#2d5a3d] outline-none text-right w-full" />
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-[#1a1c1a]">{mat.name}</div>
-                          {mat.piece_length > 0 && (
-                            <div className="flex items-center gap-1 justify-end mt-0.5">
+                        {mat.piece_length !== undefined && mat.piece_length > 0 && (
+                          <div className="flex items-center gap-3 justify-end">
+                            <div className="flex items-center gap-1">
                               <input type="number" step="0.1" value={mat.piece_length}
                                 onChange={e => updateMaterial(mat.id, 'piece_length', Number(e.target.value))}
-                                className="w-12 h-6 px-1 border border-[#c1c9c0] rounded text-[10px] text-center focus:border-[#2d5a3d] outline-none" />
-                              <span className="text-[10px] text-[#717971]">אורך יח' (מ')</span>
+                                className="w-12 h-7 px-1 border border-[#c1c9c0] rounded-lg text-xs text-center bg-white focus:border-[#2d5a3d] outline-none" />
+                              <span className="text-[10px] text-[#717971]">אורך (מ')</span>
                             </div>
-                          )}
-                        </div>
+                            {mat.width > 0 && (
+                              <div className="flex items-center gap-1">
+                                <input type="number" step="0.1" value={mat.width}
+                                  onChange={e => updateMaterial(mat.id, 'width', Number(e.target.value))}
+                                  className="w-10 h-7 px-1 border border-[#c1c9c0] rounded-lg text-xs text-center bg-white focus:border-[#2d5a3d] outline-none" />
+                                <span className="text-[10px] text-[#717971]">רוחב (ס"מ)</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -215,7 +228,7 @@ export default function Onboarding() {
               })}
             </div>
 
-            <p className="text-[10px] text-[#717971] text-center">את שאר החומרים תוכל לעדכן בהגדרות → מחירון</p>
+            <p className="text-xs text-[#717971] text-center">את שאר החומרים תוכל לעדכן בהגדרות → מחירון</p>
 
             <button onClick={next}
               className="w-full h-14 bg-[#2d5a3d] text-white rounded-xl font-bold text-lg shadow-md hover:brightness-110 transition flex items-center justify-center gap-2">
