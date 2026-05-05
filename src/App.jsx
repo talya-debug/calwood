@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { SignedIn, SignedOut, SignIn } from '@clerk/clerk-react'
+import { useState } from 'react'
+import { SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react'
 import { isOnboardingDone } from './utils/storage'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
@@ -8,6 +9,25 @@ import Quotes from './pages/Quotes'
 import Clients from './pages/Clients'
 import Settings from './pages/Settings'
 import Onboarding from './pages/Onboarding'
+
+function LoginBox() {
+  const [mode, setMode] = useState('signin')
+  return (
+    <div className="w-full max-w-sm bg-white rounded-3xl shadow-lg p-8">
+      <h2 className="text-xl font-bold text-[#1a1c1a] text-center mb-2">
+        {mode === 'signin' ? 'כניסה למערכת' : 'הרשמה'}
+      </h2>
+      <p className="text-sm text-[#717971] text-center mb-6">
+        {mode === 'signin' ? 'התחבר כדי לנהל את הפרויקטים שלך' : 'צור חשבון חדש בחינם'}
+      </p>
+      {mode === 'signin' ? <SignIn routing="hash" /> : <SignUp routing="hash" />}
+      <button onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+        className="w-full text-center text-sm text-[#2d5a3d] font-bold mt-4 py-2">
+        {mode === 'signin' ? 'אין לך חשבון? הירשם בחינם' : 'יש לך חשבון? התחבר'}
+      </button>
+    </div>
+  )
+}
 
 function App() {
   return (
@@ -18,11 +38,7 @@ function App() {
           <h1 className="text-5xl font-black text-[#144227] mb-3" style={{ fontFamily: 'Rubik' }}>CalWood</h1>
           <p className="text-xl font-bold text-[#2d5a3d] mb-1">הצעות מחיר חכמות לעבודות עץ</p>
           <p className="text-sm text-[#717971] mb-8">תחשב כמויות, תבנה הצעות, תחסוך זמן</p>
-          <div className="w-full max-w-sm bg-white rounded-3xl shadow-lg p-8">
-            <h2 className="text-xl font-bold text-[#1a1c1a] text-center mb-2">כניסה למערכת</h2>
-            <p className="text-sm text-[#717971] text-center mb-6">התחבר כדי לנהל את הפרויקטים שלך</p>
-            <SignIn routing="hash" />
-          </div>
+          <LoginBox />
           <div className="flex gap-3 mt-8">
             <div className="bg-[#2d5a3d]/10 text-[#2d5a3d] text-xs font-bold px-4 py-2 rounded-full">חישוב כמויות אוטומטי</div>
             <div className="bg-[#fdce6c]/30 text-[#7a5900] text-xs font-bold px-4 py-2 rounded-full">הפקת הצעות PDF</div>
