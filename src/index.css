@@ -55,8 +55,5 @@ button, a, input, select, textarea {
 ::-webkit-scrollbar-thumb { background: #c1c9c0; border-radius: 3px; }
 
 /* Clerk — לבן בתוך לבן, בלי shadow */
-.cl-card { background: #fff !important; box-shadow: none !important; border: none !important; padding: 0 !important; }
-.cl-footer, .cl-footerAction { display: none !important; }
-.cl-headerTitle, .cl-headerSubtitle { display: none !important; }
+/* Clerk — כרטיס אחד בלבד */
 .cl-formButtonPrimary { background-color: #2d5a3d !important; border-radius: 12px !important; }
-.cl-internal-b3fm6y { background: #fff !important; box-shadow: none !important; }
