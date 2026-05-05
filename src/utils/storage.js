@@ -178,3 +178,12 @@ export function saveClient(client) {
 export function deleteClient(id) {
   save('clients', getClients().filter(c => c.id !== id))
 }
+
+// --- Onboarding ---
+export function isOnboardingDone() {
+  return load('onboarding_done', false)
+}
+
+export function setOnboardingDone() {
+  save('onboarding_done', true)
+}
