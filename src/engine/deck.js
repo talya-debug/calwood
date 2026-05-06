@@ -17,14 +17,15 @@ const DEFAULTS = {
 }
 
 // סוגי עץ — matId מפנה למחירון, ברירות מחדל למידות
+// thickness = עובי קרש בס"מ. עד 2 = ריווח 40, מעל 2 = ריווח 60
 const WOOD_TYPES = {
-  pine:       { name: 'אורן', matId: 10, defaultPrice: 12, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, screwType: 'pine' },
-  bamboo_d:   { name: 'במבוק כהה', matId: 11, defaultPrice: 38.94, defaultBoardWidth: 0.142, defaultBoardLength: 1.85, screwType: 'bamboo' },
-  bamboo_l:   { name: 'במבוק בהיר', matId: 12, defaultPrice: 43.66, defaultBoardWidth: 0.142, defaultBoardLength: 1.85, screwType: 'bamboo' },
-  ipe:        { name: 'איפאה', matId: 13, defaultPrice: 64.90, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, screwType: 'pine' },
-  ipe_prem:   { name: 'איפאה פרמיום', matId: 14, defaultPrice: 70.80, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, screwType: 'pine' },
-  cumaru:     { name: 'קומרו', matId: 15, defaultPrice: 47.20, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, screwType: 'pine' },
-  sucupira:   { name: 'סוקופירה', matId: 16, defaultPrice: 40.12, defaultBoardWidth: 0.145, defaultBoardLength: 3.6, screwType: 'pine' },
+  pine:       { name: 'אורן', matId: 10, defaultPrice: 12, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, thickness: 2.5, screwType: 'pine' },
+  bamboo_d:   { name: 'במבוק כהה', matId: 11, defaultPrice: 38.94, defaultBoardWidth: 0.142, defaultBoardLength: 1.85, thickness: 2, screwType: 'bamboo' },
+  bamboo_l:   { name: 'במבוק בהיר', matId: 12, defaultPrice: 43.66, defaultBoardWidth: 0.142, defaultBoardLength: 1.85, thickness: 2, screwType: 'bamboo' },
+  ipe:        { name: 'איפאה', matId: 13, defaultPrice: 64.90, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, thickness: 2.5, screwType: 'pine' },
+  ipe_prem:   { name: 'איפאה פרמיום', matId: 14, defaultPrice: 70.80, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, thickness: 2.5, screwType: 'pine' },
+  cumaru:     { name: 'קומרו', matId: 15, defaultPrice: 47.20, defaultBoardWidth: 0.15, defaultBoardLength: 3.6, thickness: 2.5, screwType: 'pine' },
+  sucupira:   { name: 'סוקופירה', matId: 16, defaultPrice: 40.12, defaultBoardWidth: 0.145, defaultBoardLength: 3.6, thickness: 1.9, screwType: 'pine' },
 }
 
 function getPrice(materials, key) {
@@ -85,8 +86,12 @@ export function calculateDeck(dims, rules, materialsList, profile) {
     supportLegs = Math.ceil(supportLength / 1.15) * supportCount
   }
 
-  // כמויות — מהמידות של הקבלן!
-  const joistCount = Math.ceil(DIM_BOARD / 0.4) + 1
+  // ריווח קורות תשתית — לפי עובי הקרש (בדיוק כמו באקסל)
+  // עובי עד 2 ס"מ (במבוק 20מ"מ, סוקופירה 19מ"מ) = ריווח 40 ס"מ
+  // עובי 2.5+ ס"מ (אורן 25מ"מ, איפאה 25מ"מ, קומרו 25מ"מ) = ריווח 60 ס"מ
+  const JOIST_SPACING = wood.thickness <= 2 ? 0.40 : 0.60
+
+  const joistCount = Math.ceil(DIM_BOARD / JOIST_SPACING) + 1
   const legsPerJoist = supportBeam ? 0 : Math.ceil(DIM_JOIST / 1.15) + 1
   const totalLegs = supportBeam ? supportLegs : joistCount * legsPerJoist
 
