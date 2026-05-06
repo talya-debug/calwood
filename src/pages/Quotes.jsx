@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getQuotes, deleteQuote, saveQuote, getProfile, getBranding } from '../utils/storage'
+import { getQuotes, deleteQuote, saveQuote, getProfile, getBranding, deleteQuoteAndSync, updateQuoteStatusAndSync } from '../utils/storage'
 import { Trash2, Download, Search, Plus, ChevronDown, Calendar, MoreHorizontal } from 'lucide-react'
 import { generateQuotePDF } from '../utils/pdf'
 
@@ -22,8 +22,8 @@ export default function Quotes() {
     return (q.client?.name || '').includes(search) || (typeNames[q.type] || '').includes(search)
   })
 
-  const handleDelete = (id) => { deleteQuote(id); setQuotes(getQuotes()) }
-  const handleStatus = (id, s) => { const q = quotes.find(x => x.id === id); if (q) { q.status = s; saveQuote(q); setQuotes(getQuotes()) }; setStatusMenu(null) }
+  const handleDelete = (id) => { deleteQuoteAndSync(id); setQuotes(getQuotes()) }
+  const handleStatus = (id, s) => { const q = quotes.find(x => x.id === id); if (q) { q.status = s; saveQuote(q); updateQuoteStatusAndSync(q); setQuotes(getQuotes()) }; setStatusMenu(null) }
   const fmt = (n) => Number(n || 0).toLocaleString('he-IL')
 
   return (

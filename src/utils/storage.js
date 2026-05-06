@@ -192,3 +192,83 @@ export function isOnboardingDone() {
 export function setOnboardingDone() {
   save('onboarding_done', true)
 }
+
+// --- סנכרון עם השרת ---
+import { fetchProfile, updateProfile as apiUpdateProfile, fetchMaterials, saveMaterialsToServer,
+  fetchClients, createClient as apiCreateClient, removeClient as apiRemoveClient,
+  fetchQuotes, createQuote as apiCreateQuote, updateQuote as apiUpdateQuote, removeQuote as apiRemoveQuote
+} from './api'
+
+// מושך את כל הנתונים מהשרת לקאש מקומי
+export async function syncFromServer() {
+  try {
+    const profile = await fetchProfile()
+    if (profile) {
+      save('profile', profile)
+      if (profile.onboarding_done) save('onboarding_done', true)
+    }
+
+    const materials = await fetchMaterials()
+    if (materials && materials.length > 0) save('materials', materials)
+
+    const clients = await fetchClients()
+    save('clients', clients || [])
+
+    const quotes = await fetchQuotes()
+    save('quotes', quotes || [])
+  } catch (err) {
+    console.warn('syncFromServer failed, using local cache:', err.message)
+  }
+}
+
+// שומר פרופיל גם מקומית וגם בשרת
+export async function saveProfileAndSync(profile) {
+  save('profile', profile)
+  try { await apiUpdateProfile(profile) } catch {}
+}
+
+// שומר מחירון גם מקומית וגם בשרת
+export async function saveMaterialsAndSync(materials) {
+  save('materials', materials)
+  try { await saveMaterialsToServer(materials) } catch {}
+}
+
+// שומר לקוח גם מקומית וגם בשרת
+export async function saveClientAndSync(client) {
+  const saved = saveClient(client) // localStorage
+  try { await apiCreateClient(client) } catch {}
+  return saved
+}
+
+// שומר הצעה גם מקומית וגם בשרת
+export async function saveQuoteAndSync(quote) {
+  const saved = saveQuote(quote) // localStorage
+  try {
+    await apiCreateQuote({
+      type: quote.type,
+      status: quote.status,
+      dimensions: quote.dimensions,
+      result: quote.result,
+      client_info: quote.client,
+    })
+  } catch {}
+  return saved
+}
+
+// מוחק הצעה מקומית ומהשרת
+export async function deleteQuoteAndSync(id) {
+  deleteQuote(id)
+  try { await apiRemoveQuote(id) } catch {}
+}
+
+// מוחק לקוח מקומית ומהשרת
+export async function deleteClientAndSync(id) {
+  deleteClient(id)
+  try { await apiRemoveClient(id) } catch {}
+}
+
+// מעדכן סטטוס הצעה
+export async function updateQuoteStatusAndSync(quote) {
+  saveQuote(quote) // localStorage
+  try { await apiUpdateQuote({ id: quote.id, status: quote.status }) } catch {}
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getProfile, saveProfile, getBranding, saveBranding, getMaterials, saveMaterials } from '../utils/storage'
+import { getProfile, saveProfile, getBranding, saveBranding, getMaterials, saveMaterials, saveProfileAndSync, saveMaterialsAndSync } from '../utils/storage'
 import { Save, Plus, Trash2, ToggleLeft, ToggleRight, Check } from 'lucide-react'
 
 export default function Settings() {
@@ -22,7 +22,7 @@ export default function Settings() {
   }
 
   const handleSaveProfile = () => {
-    saveProfile(profile)
+    saveProfileAndSync(profile)
     showSaved('הפרופיל נשמר בהצלחה')
   }
 
@@ -32,7 +32,7 @@ export default function Settings() {
   }
 
   const handleSaveMaterials = () => {
-    saveMaterials(materials)
+    saveMaterialsAndSync(materials)
     showSaved('המחירון נשמר בהצלחה')
   }
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { calculatePergola } from '../engine/pergola'
 import { calculateDeck, WOOD_TYPES } from '../engine/deck'
-import { getProfile, getBranding, getClients, saveQuote, saveClient } from '../utils/storage'
+import { getProfile, getBranding, getClients, saveQuote, saveClient, saveQuoteAndSync, saveClientAndSync } from '../utils/storage'
 import { generateMaterialsPDF } from '../utils/pdf'
 import QuotePreview from '../components/QuotePreview'
 import { ChevronDown, ChevronUp, Save, Check, UserPlus, Search, ClipboardList, FileText, Settings2 } from 'lucide-react'
@@ -87,9 +87,10 @@ export default function NewQuote() {
 
   const handleSave = () => {
     if (!result) return
-    if (client.name && !client.id) { const s = saveClient({ ...client }); client.id = s.id }
-    saveQuote({ type: workType, client: { id: client.id, name: client.name, phone: client.phone },
-      dimensions: dims, result, status: 'draft' })
+    if (client.name && !client.id) { const s = saveClient({ ...client }); client.id = s.id; saveClientAndSync(client) }
+    const q = { type: workType, client: { id: client.id, name: client.name, phone: client.phone },
+      dimensions: dims, result, status: 'draft' }
+    saveQuote(q); saveQuoteAndSync(q)
     setSaved(true); setTimeout(() => setSaved(false), 3000)
   }
 

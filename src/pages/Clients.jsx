@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getClients, saveClient, deleteClient, getQuotes } from '../utils/storage'
+import { getClients, saveClient, deleteClient, getQuotes, saveClientAndSync, deleteClientAndSync } from '../utils/storage'
 import { Plus, Trash2, Search, Phone, MapPin, X, ChevronDown, ChevronUp, Calendar } from 'lucide-react'
 
 const typeNames = { pergola: 'פרגולה', deck: 'דק' }
@@ -80,11 +80,11 @@ export default function Clients() {
 
   const handleSave = () => {
     if (!form.name.trim()) return
-    saveClient({ ...form }); setClients(getClients())
+    saveClient({ ...form }); saveClientAndSync(form); setClients(getClients())
     setForm({ name: '', phone: '', city: '' }); setShowForm(false)
   }
 
-  const handleDelete = (id) => { deleteClient(id); setClients(getClients()) }
+  const handleDelete = (id) => { deleteClientAndSync(id); setClients(getClients()) }
 
   return (
     <div className="space-y-5">

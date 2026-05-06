@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProfile, saveProfile, getMaterials, saveMaterials, setOnboardingDone } from '../utils/storage'
+import { getProfile, saveProfile, getMaterials, saveMaterials, setOnboardingDone, saveProfileAndSync, saveMaterialsAndSync } from '../utils/storage'
 import { ChevronLeft, Building2, Wrench, Package, Rocket, HelpCircle } from 'lucide-react'
 
 const STEPS = [
@@ -55,13 +55,14 @@ export default function Onboarding() {
   const updateMaterial = (id, key, val) => setMaterials(prev => prev.map(m => m.id === id ? { ...m, [key]: val } : m))
 
   const next = () => {
-    if (step === 1 || step === 2) saveProfile(profile)
-    if (step === 3) { saveMaterials(materials); saveProfile({ ...profile, supplier_discount: supplierDiscount }) }
+    if (step === 1 || step === 2) saveProfileAndSync(profile)
+    if (step === 3) { saveMaterialsAndSync(materials); saveProfileAndSync({ ...profile, supplier_discount: supplierDiscount }) }
     setStep(s => s + 1)
   }
 
   const finish = (goTo) => {
     setOnboardingDone()
+    saveProfileAndSync({ ...profile, onboarding_done: true })
     navigate(goTo)
   }
 

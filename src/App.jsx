@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
-import { SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react'
-import { isOnboardingDone } from './utils/storage'
+import { useState, useEffect } from 'react'
+import { SignedIn, SignedOut, SignIn, SignUp, useUser } from '@clerk/clerk-react'
+import { isOnboardingDone, syncFromServer } from './utils/storage'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import NewQuote from './pages/NewQuote'
@@ -36,9 +36,38 @@ function App() {
       </SignedOut>
 
       <SignedIn>
-        {!isOnboardingDone() ? (
-          <Onboarding />
-        ) : (
+        <SyncWrapper />
+      </SignedIn>
+    </>
+  )
+}
+
+function SyncWrapper() {
+  const { user } = useUser()
+  const [synced, setSynced] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      // שומר clerk_id לשימוש ב-API calls
+      window.__clerkUserId = user.id
+      syncFromServer().then(() => setSynced(true)).catch(() => setSynced(true))
+    }
+  }, [user?.id])
+
+  if (!synced) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f9faf5]">
+        <div className="text-center">
+          <div className="text-3xl mb-3">🪵</div>
+          <p className="text-[#717971]">טוען...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return !isOnboardingDone() ? (
+    <Onboarding />
+  ) : (
           <Routes>
             <Route element={<Layout />}>
               <Route index element={<Dashboard />} />
@@ -49,9 +78,6 @@ function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-        )}
-      </SignedIn>
-    </>
   )
 }
 
