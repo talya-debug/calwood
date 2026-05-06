@@ -48,7 +48,7 @@ export default function DeckSketch({ width, length, direction, woodType, height,
     }
   }
 
-  // ג'ויסטים
+  // קורות תשתית
   const jCount = joistCount || Math.floor((isHoriz ? width : length) / 0.4) + 1
   const joistLines = []
   for (let i = 0; i < Math.min(jCount, 20); i++) {
@@ -79,7 +79,7 @@ export default function DeckSketch({ width, length, direction, woodType, height,
         {/* === מבט מלמעלה === */}
         <text x={svgW / 2} y={18} textAnchor="middle" fontSize="13" fill="#1F3864" fontWeight="bold">מבט מלמעלה</text>
 
-        {/* ג'ויסטים (מתחת — מקווקו) */}
+        {/* קורות תשתית (מתחת — מקווקו) */}
         {joistLines.map((j, i) => (
           <line key={`j${i}`} x1={j.x1} y1={j.y1} x2={j.x2} y2={j.y2}
             stroke="#A0522D" strokeWidth="3.5" opacity="0.2" strokeLinecap="round" />
@@ -150,7 +150,7 @@ export default function DeckSketch({ width, length, direction, woodType, height,
           </g>
         ))}
 
-        {/* ג'ויסטים בחתך */}
+        {/* קורות תשתית בחתך */}
         {[0.1, 0.25, 0.4, 0.55, 0.7, 0.85].map((t, i) => (
           <rect key={`sj${i}`} x={ox + dw * t - 3} y={deckLevel + 2}
             width={6} height={8} fill="#A0522D" opacity="0.45" stroke="#5C3317" strokeWidth="0.5" rx="1" />
@@ -171,7 +171,7 @@ export default function DeckSketch({ width, length, direction, woodType, height,
         {/* מקרא */}
         <rect x={padX} y={svgH - 28} width={svgW - padX * 2} height={22} fill="white" rx="4" stroke="#eee" />
         <text x={svgW / 2} y={svgH - 13} textAnchor="middle" fontSize="11" fill="#444">
-          {woodNames[woodType] || 'אורן'} | {jCount} ג'ויסטים | {Math.round(width * length)} מ"ר
+          {woodNames[woodType] || 'אורן'} | {jCount} קורות תשתית | {Math.round(width * length)} מ"ר
           {stairCount > 0 ? ` | ${stairCount} מדרגות` : ''}
         </text>
       </svg>

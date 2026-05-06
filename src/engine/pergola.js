@@ -123,8 +123,14 @@ export function calculatePergola(dims, rules, materialsList, profile) {
     lineItems.push({ name: `קירוי — ${rn[roofType]}`, quantity: 1, unit: '', detail: `${area} מ"ר`, cost: costCover })
   }
 
-  // עבודה
-  const workDays = Math.max(2, Math.ceil(L * W / 8))
+  // עבודה — קצב לפי פרופיל הקבלן
+  const REF_AREA = 12 // פרגולה ממוצעת 3×4 = 12 מ"ר
+  const hasHelper = helperType === 'regular' || helperType === 'pro'
+  const refDays = hasHelper
+    ? (profile.pergola_days_with_helper ?? 3)
+    : (profile.pergola_days_alone ?? 5)
+  const sqmPerDay = REF_AREA / refDays
+  const workDays = Math.max(2, Math.ceil(area / sqmPerDay))
   const costLaborOwner = workDays * 8 * hourlyRate
   let costLaborHelper = 0
   if (helperType === 'regular') costLaborHelper = workDays * helperDaily

@@ -20,7 +20,7 @@ export default function QuotePreview({ result, client, profile, branding, onClos
     } else {
       l.push(`התקנת דק ${woodNames[dims.woodType] || 'עץ'}`)
       l.push(`מידות: ${dims.length}x${dims.width} מ' (${fmt(result.area)} מ"ר) | גובה: ${heightNames[dims.height] || ''}`)
-      l.push(`כולל: לוחות דק, ג'ויסטים, תשתית, ברגים, זפת, שימון`)
+      l.push(`כולל: לוחות דק, קורות תשתית, ברגים, זפת, שימון`)
       if (dims.stairs > 0) l.push(`${dims.stairs} מדרגות`)
     }
     return l.join('\n')

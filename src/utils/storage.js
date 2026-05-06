@@ -38,6 +38,11 @@ export function getProfile() {
     profit_pct: 20,
     safety_pct: 5,
     supplier_discount: 0,
+    // ימי עבודה — ברירת מחדל מאורי
+    pergola_days_with_helper: 3,   // פרגולה 12 מ"ר (3×4)
+    pergola_days_alone: 5,         // פרגולה 12 מ"ר לבד
+    deck_days_with_helper: 2,      // דק 20 מ"ר
+    deck_days_alone: 3.5,          // דק 20 מ"ר לבד
   })
 }
 

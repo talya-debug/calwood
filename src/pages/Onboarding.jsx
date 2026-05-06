@@ -49,6 +49,7 @@ export default function Onboarding() {
   const [profile, setProfile] = useState(getProfile)
   const [materials, setMaterials] = useState(getMaterials)
   const [supplierDiscount, setSupplierDiscount] = useState(profile.supplier_discount || 0)
+  const [showWorkDays, setShowWorkDays] = useState(false)
 
   const updateProfile = (key, val) => setProfile(prev => ({ ...prev, [key]: val }))
   const updateMaterial = (id, key, val) => setMaterials(prev => prev.map(m => m.id === id ? { ...m, [key]: val } : m))
@@ -151,6 +152,35 @@ export default function Onboarding() {
                 type="number" placeholder="" />
             </div>
             <Tip text="תקורה = הוצאות קבועות שלך (רכב, כלים, ביטוח). ביטחון = כרית למקרה של חריגה. רווח = האחוז שאתה רוצה להרוויח." />
+
+            {/* ימי עבודה */}
+            <div className="border-t border-[#edeeea] pt-4 mt-2">
+              <p className="text-sm font-bold text-[#1a1c1a] mb-1">ימי עבודה</p>
+              <p className="text-xs text-[#717971] mb-3">כרגע המערכת מחשבת ימי עבודה לפי ממוצע. אצלך זה שונה?</p>
+
+              {!showWorkDays ? (
+                <div className="flex gap-2">
+                  <button onClick={() => setShowWorkDays(true)}
+                    className="flex-1 py-2.5 bg-[#fdce6c] text-[#7a5900] rounded-xl text-sm font-bold">כן, אתאים לקצב שלי</button>
+                  <button onClick={next}
+                    className="flex-1 py-2.5 border border-[#c1c9c0] text-[#717971] rounded-xl text-sm">לא, ממשיך</button>
+                </div>
+              ) : (
+                <div className="space-y-3 bg-[#f3f4ef] rounded-xl p-4">
+                  <p className="text-xs font-bold text-[#414942]">פרגולה ממוצעת (3×4 מ') — כמה ימים?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <LabelInput label="עם עוזר" value={profile.pergola_days_with_helper} onChange={v => updateProfile('pergola_days_with_helper', v)} type="number" />
+                    <LabelInput label="לבד" value={profile.pergola_days_alone} onChange={v => updateProfile('pergola_days_alone', v)} type="number" />
+                  </div>
+
+                  <p className="text-xs font-bold text-[#414942]">דק ממוצע (20 מ"ר) — כמה ימים?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <LabelInput label="עם עוזר" value={profile.deck_days_with_helper} onChange={v => updateProfile('deck_days_with_helper', v)} type="number" />
+                    <LabelInput label="לבד" value={profile.deck_days_alone} onChange={v => updateProfile('deck_days_alone', v)} type="number" />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <button onClick={next}
               className="w-full h-14 bg-[#2d5a3d] text-white rounded-xl font-bold text-lg shadow-md hover:brightness-110 transition flex items-center justify-center gap-2">

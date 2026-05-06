@@ -174,6 +174,21 @@ export default function Settings() {
             </p>
           </div>
 
+          {/* ימי עבודה */}
+          <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+            <h3 className="text-lg font-bold text-[#1a1c1a]">ימי עבודה</h3>
+            <p className="text-xs text-[#717971]">פרגולה ממוצעת (3×4 מ') — כמה ימים?</p>
+            <div className="grid grid-cols-2 gap-4">
+              <NumField label="עם עוזר" suffix="ימים" value={profile.pergola_days_with_helper} onChange={v => updateProfile('pergola_days_with_helper', v)} />
+              <NumField label="לבד" suffix="ימים" value={profile.pergola_days_alone} onChange={v => updateProfile('pergola_days_alone', v)} />
+            </div>
+            <p className="text-xs text-[#717971]">דק ממוצע (20 מ"ר) — כמה ימים?</p>
+            <div className="grid grid-cols-2 gap-4">
+              <NumField label="עם עוזר" suffix="ימים" value={profile.deck_days_with_helper} onChange={v => updateProfile('deck_days_with_helper', v)} />
+              <NumField label="לבד" suffix="ימים" value={profile.deck_days_alone} onChange={v => updateProfile('deck_days_alone', v)} />
+            </div>
+          </div>
+
           {/* כפתור שמירה קבוע */}
           <div className="sticky bottom-20 z-40">
             <button onClick={handleSaveProfile} className="w-full py-4 rounded-xl bg-[#C45D3E] text-white font-bold text-lg flex items-center justify-center gap-2 hover:brightness-110 transition shadow-lg shadow-[#C45D3E]/20">

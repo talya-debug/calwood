@@ -111,9 +111,9 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   lineItems.push({ name: `קרשי דק ${wood.name}`, quantity: totalBoards, unit: 'לוחות',
     detail: `${boardRows} שורות × ${boardsPerRow} לוחות של ${board.boardLength} מ'`, cost: costBoards })
 
-  // ג'ויסטים
+  // קורות תשתית דק
   const costJoists = Math.round(joistCount * DIM_JOIST * ep_joist)
-  lineItems.push({ name: "ג'ויסטים", quantity: joistCount, unit: "יח'",
+  lineItems.push({ name: "קורות תשתית דק", quantity: joistCount, unit: "יח'",
     detail: `${joistCount} × ${DIM_JOIST} מ' × ${ep_joist} ₪/מ'`, cost: costJoists })
 
   // תומך
@@ -125,7 +125,7 @@ export function calculateDeck(dims, rules, materialsList, profile) {
       detail: `${supportCount} × ${supportLength} מ'`, cost: costSupport })
   }
 
-  // תוספת גובה — רק על קרשים+ג'ויסטים
+  // תוספת גובה — רק על קרשים+קורות תשתית דק
   let costHeight = 0
   if (height === 'mid') costHeight = Math.round((costBoards + costJoists) * 20 / 100)
   else if (height === 'high') costHeight = Math.round((costBoards + costJoists) * 40 / 100)
@@ -169,8 +169,14 @@ export function calculateDeck(dims, rules, materialsList, profile) {
       detail: '', cost: stairs * getPrice(materials, 'stair') })
   }
 
-  // עבודה
-  const workDays = Math.max(2, Math.round(L * W * 0.1 * 10) / 10)
+  // עבודה — קצב לפי פרופיל הקבלן
+  const REF_AREA = 20 // דק ממוצע 20 מ"ר
+  const hasHelper = helperType === 'regular' || helperType === 'pro'
+  const refDays = hasHelper
+    ? (profile.deck_days_with_helper ?? 2)
+    : (profile.deck_days_alone ?? 3.5)
+  const sqmPerDay = REF_AREA / refDays
+  const workDays = Math.max(2, Math.round(area / sqmPerDay * 10) / 10)
   const costLaborOwner = workDays * 8 * hourlyRate
   let costLaborHelper = 0
   if (helperType === 'regular') costLaborHelper = workDays * helperDaily
