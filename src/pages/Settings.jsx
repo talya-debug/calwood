@@ -28,6 +28,17 @@ export default function Settings() {
 
   const handleSaveBranding = () => {
     saveBranding(branding)
+    // branding נשמר גם בפרופיל לסנכרון עם השרת
+    saveProfileAndSync({
+      brand_color: branding.brand_color,
+      quote_title: branding.quote_title,
+      payment_terms: branding.payment_terms,
+      warranty_text: branding.warranty_text,
+      validity_text: branding.validity_text,
+      included_list: branding.included_list,
+      excluded_list: branding.excluded_list,
+      logo_url: branding.logo_url,
+    })
     showSaved('המיתוג נשמר בהצלחה')
   }
 

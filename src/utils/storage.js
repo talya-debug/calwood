@@ -54,7 +54,7 @@ export function saveProfile(profile) {
 export function getBranding() {
   return load('branding', {
     logo_url: '',
-    brand_color: '#1F3864',
+    brand_color: '#2d5a3d',
     quote_title: 'הצעת מחיר',
     payment_terms: '40% מקדמה בתחילת העבודה, 60% בסיום',
     warranty_text: 'אחריות 5 שנים על עבודה',

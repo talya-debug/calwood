@@ -266,7 +266,7 @@ export default function Onboarding() {
               className="w-full h-14 bg-[#2d5a3d] text-white rounded-xl font-bold text-lg shadow-md hover:brightness-110 transition flex items-center justify-center gap-2">
               סיימתי <ChevronLeft size={18} />
             </button>
-            <button onClick={() => { setStep(4); saveProfile({ ...profile, supplier_discount: supplierDiscount }) }}
+            <button onClick={() => { setStep(4); saveProfileAndSync({ ...profile, supplier_discount: supplierDiscount }) }}
               className="w-full text-center text-sm text-[#717971] py-2">אדלג ואעדכן אח"כ →</button>
             <button onClick={() => setStep(2)} className="w-full text-center text-sm text-[#717971] py-1">← חזרה</button>
           </div>
