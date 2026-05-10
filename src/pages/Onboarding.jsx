@@ -63,7 +63,8 @@ export default function Onboarding() {
   const finish = (goTo) => {
     setOnboardingDone()
     saveProfileAndSync({ ...profile, onboarding_done: true })
-    navigate(goTo)
+    // reload כדי ש-App יקרא מחדש את isOnboardingDone
+    window.location.href = goTo
   }
 
   // קטגוריות מחירון עיקריות להצגה
