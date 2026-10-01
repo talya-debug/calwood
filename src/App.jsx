@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { SignedIn, SignedOut, SignIn, SignUp, useUser } from '@clerk/clerk-react'
 import { isOnboardingDone, syncFromServer } from './utils/storage'
+import { isDemoMode, DEMO_USER_ID } from './utils/demo'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import NewQuote from './pages/NewQuote'
@@ -19,6 +20,9 @@ function LoginBox() {
 }
 
 function App() {
+  // מצב בדיקה — מדלג על מסך הכניסה ונכנס לחשבון הבדיקה
+  if (isDemoMode()) return <SyncWrapper demoUserId={DEMO_USER_ID} />
+
   return (
     <>
       <SignedOut>
@@ -42,17 +46,18 @@ function App() {
   )
 }
 
-function SyncWrapper() {
+function SyncWrapper({ demoUserId }) {
   const { user } = useUser()
   const [synced, setSynced] = useState(false)
+  const userId = demoUserId || user?.id
 
   useEffect(() => {
-    if (user) {
+    if (userId) {
       // שומר clerk_id לשימוש ב-API calls
-      window.__clerkUserId = user.id
+      window.__clerkUserId = userId
       syncFromServer().then(() => setSynced(true)).catch(() => setSynced(true))
     }
-  }, [user?.id])
+  }, [userId])
 
   if (!synced) {
     return (
