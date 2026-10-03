@@ -1,15 +1,38 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProfile, saveProfile, getMaterials, saveMaterials, setOnboardingDone, saveProfileAndSync, saveMaterialsAndSync } from '../utils/storage'
-import { ChevronLeft, Building2, Wrench, Package, Rocket, HelpCircle } from 'lucide-react'
+import { getProfile, getMaterials, getBranding, saveBranding, setOnboardingDone, saveProfileAndSync, saveMaterialsAndSync } from '../utils/storage'
+import { ChevronLeft, Building2, Wrench, Package, HelpCircle, FileCheck } from 'lucide-react'
 
-const STEPS = [
-  { icon: '👋', title: 'ברוכים הבאים' },
-  { icon: Building2, title: 'פרטי העסק' },
-  { icon: Wrench, title: 'דרכי עבודה' },
-  { icon: Package, title: 'המחירון שלך' },
-  { icon: Rocket, title: 'מוכן!' },
-]
+const TOTAL_STEPS = 6
+
+// אפשרויות לתנאי ההצעה — שום דבר לא מסומן מראש
+const PAYMENT_OPTIONS = ['40% מקדמה בתחילת העבודה, 60% בסיום', '30% מקדמה, 70% בסיום', '50% מקדמה, 50% בסיום', 'תשלום מלא בסיום העבודה']
+const WARRANTY_OPTIONS = ['אחריות שנה על העבודה', 'אחריות 3 שנים על העבודה', 'אחריות 5 שנים על העבודה']
+const VALIDITY_OPTIONS = ['ההצעה בתוקף ל-7 ימים', 'ההצעה בתוקף ל-14 יום', 'ההצעה בתוקף ל-30 יום']
+
+// בחירה מתוך אפשרויות + "ללא" + טקסט חופשי
+function ChoiceGroup({ label, options, value, onChange, noneLabel }) {
+  const isCustom = value !== '' && !options.includes(value)
+  const [custom, setCustom] = useState(isCustom)
+  const chip = (active) => `px-3 py-2 rounded-xl text-xs font-bold transition-all text-right
+    ${active ? 'bg-[#2d5a3d] text-white' : 'bg-[#e7e9e4] text-[#414942] hover:bg-[#d9dad6]'}`
+  return (
+    <div>
+      <label className="block text-sm font-bold text-[#1a1c1a] mb-2">{label}</label>
+      <div className="flex flex-wrap gap-2 justify-end">
+        {options.map(o => (
+          <button key={o} type="button" onClick={() => { setCustom(false); onChange(o) }} className={chip(!custom && value === o)}>{o}</button>
+        ))}
+        <button type="button" onClick={() => { setCustom(true); onChange('') }} className={chip(custom)}>אחר — אכתוב בעצמי</button>
+        <button type="button" onClick={() => { setCustom(false); onChange('') }} className={chip(!custom && value === '')}>{noneLabel}</button>
+      </div>
+      {custom && (
+        <input value={value} onChange={e => onChange(e.target.value)} placeholder="כתוב כאן..."
+          className="w-full h-11 mt-2 px-4 border border-[#c1c9c0] rounded-xl text-sm focus:border-[#2d5a3d] outline-none" />
+      )}
+    </div>
+  )
+}
 
 function ProgressDots({ current, total }) {
   return (
@@ -50,6 +73,16 @@ export default function Onboarding() {
   const [materials, setMaterials] = useState(getMaterials)
   const [supplierDiscount, setSupplierDiscount] = useState(profile.supplier_discount || 0)
   const [showWorkDays, setShowWorkDays] = useState(false)
+  const [terms, setTerms] = useState(() => {
+    const b = getBranding()
+    return { payment_terms: b.payment_terms || '', warranty_text: b.warranty_text || '', validity_text: b.validity_text || '' }
+  })
+
+  // שמירת תנאי ההצעה — מקומית ובשרת
+  const saveTerms = () => {
+    saveBranding({ ...getBranding(), ...terms })
+    saveProfileAndSync({ ...profile, supplier_discount: supplierDiscount, ...terms })
+  }
 
   const updateProfile = (key, val) => setProfile(prev => ({ ...prev, [key]: val }))
   const updateMaterial = (id, key, val) => setMaterials(prev => prev.map(m => m.id === id ? { ...m, [key]: val } : m))
@@ -57,6 +90,7 @@ export default function Onboarding() {
   const next = () => {
     if (step === 1 || step === 2) saveProfileAndSync(profile)
     if (step === 3) { saveMaterialsAndSync(materials); saveProfileAndSync({ ...profile, supplier_discount: supplierDiscount }) }
+    if (step === 4) saveTerms()
     setStep(s => s + 1)
   }
 
@@ -80,7 +114,7 @@ export default function Onboarding() {
           <h1 className="text-2xl font-extrabold text-[#2d5a3d]">CalWood</h1>
         </div>
 
-        <ProgressDots current={step} total={5} />
+        <ProgressDots current={step} total={TOTAL_STEPS} />
 
         {/* === שלב 0: ברוך הבא === */}
         {step === 0 && (
@@ -272,8 +306,36 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* === שלב 4: מוכן! === */}
+        {/* === שלב 4: תנאי ההצעה — הקבלן בוחר, שום דבר לא נכתב בשמו מראש === */}
         {step === 4 && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-5">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-[#2d5a3d]/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <FileCheck size={24} className="text-[#2d5a3d]" />
+              </div>
+              <h2 className="text-xl font-extrabold text-[#1a1c1a]">תנאי ההצעה שלך</h2>
+              <p className="text-sm text-[#717971] mt-1">מה שתבחר יופיע בכל הצעת מחיר. מה שלא תבחר — לא יופיע.</p>
+            </div>
+
+            <ChoiceGroup label="תנאי תשלום" options={PAYMENT_OPTIONS} value={terms.payment_terms}
+              onChange={v => setTerms(t => ({ ...t, payment_terms: v }))} noneLabel="לא לציין" />
+            <ChoiceGroup label="אחריות" options={WARRANTY_OPTIONS} value={terms.warranty_text}
+              onChange={v => setTerms(t => ({ ...t, warranty_text: v }))} noneLabel="ללא אחריות בהצעה" />
+            <ChoiceGroup label="תוקף ההצעה" options={VALIDITY_OPTIONS} value={terms.validity_text}
+              onChange={v => setTerms(t => ({ ...t, validity_text: v }))} noneLabel="לא לציין" />
+
+            <Tip text="אפשר לשנות את זה בכל רגע בהגדרות → הצעת מחיר, וגם לערוך בכל הצעה לפני שליחה." />
+
+            <button onClick={next}
+              className="w-full h-14 bg-[#2d5a3d] text-white rounded-xl font-bold text-lg shadow-md hover:brightness-110 transition flex items-center justify-center gap-2">
+              הבא <ChevronLeft size={18} />
+            </button>
+            <button onClick={() => setStep(3)} className="w-full text-center text-sm text-[#717971] py-2">← חזרה</button>
+          </div>
+        )}
+
+        {/* === שלב 5: מוכן! === */}
+        {step === 5 && (
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center space-y-5">
             <div className="text-6xl">🎉</div>
             <h2 className="text-2xl font-extrabold text-[#1a1c1a]">הכל מוכן!</h2>

@@ -5,7 +5,8 @@
  */
 
 const DEMO_ENABLED = true
-const DEMO_USER_ID = 'demo-ai-tester'
+// גרסה 2 — חשבון בדיקה נקי, כדי שהסוכן יעבור את ההגדרה הראשונית החדשה (תנאי הצעה)
+const DEMO_USER_ID = 'demo-ai-tester-2'
 const KEY = 'calwood_demo'
 
 export function isDemoMode() {

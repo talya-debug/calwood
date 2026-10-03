@@ -29,7 +29,8 @@ export default function QuotePreview({ result, client, profile, branding, onClos
 
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(branding.quote_title || 'הצעת מחיר')
-  const [greeting, setGreeting] = useState(client?.name ? `שלום ${client.name},\nתודה רבה על פנייתך. שמחתי לבקר באתר ולהעריך את הפרויקט.\nלהלן הצעת המחיר המפורטת:` : 'להלן הצעת מחיר:')
+  // בלי "ביקור באתר" — לא כותבים בשם הקבלן משהו שאולי לא קרה. אפשר להוסיף בעריכה
+  const [greeting, setGreeting] = useState(client?.name ? `שלום ${client.name},\nתודה רבה על פנייתך.\nלהלן הצעת המחיר המפורטת:` : 'להלן הצעת מחיר:')
   const [workDesc, setWorkDesc] = useState(buildDesc)
   const [included, setIncluded] = useState(filterIncluded(branding.included_list, result).join('\n'))
   const [excluded, setExcluded] = useState((branding.excluded_list || []).join('\n'))
@@ -143,9 +144,15 @@ export default function QuotePreview({ result, client, profile, branding, onClos
 
           {/* תנאים */}
           <div className="border-t border-[#edeeea] pt-3 space-y-1 text-[11px] text-[#717971]">
-            <div><strong className="text-[#414942]">תשלום: </strong><E value={paymentTerms} onChange={setPaymentTerms} className="text-[11px]" /></div>
-            <div><strong className="text-[#414942]">אחריות: </strong><E value={warranty} onChange={setWarranty} className="text-[11px]" /></div>
-            <div><E value={validity} onChange={setValidity} className="text-[11px]" /></div>
+            {/* מוצג רק מה שהקבלן הגדיר. במצב עריכה אפשר למלא */}
+            {(editing || paymentTerms) && <div><strong className="text-[#414942]">תשלום: </strong><E value={paymentTerms} onChange={setPaymentTerms} className="text-[11px]" /></div>}
+            {(editing || warranty) && <div><strong className="text-[#414942]">אחריות: </strong><E value={warranty} onChange={setWarranty} className="text-[11px]" /></div>}
+            {(editing || validity) && <div>{editing && <strong className="text-[#414942]">תוקף: </strong>}<E value={validity} onChange={setValidity} className="text-[11px]" /></div>}
+            {!editing && !paymentTerms && !warranty && !validity && (
+              <div className="bg-[#fdce6c]/20 text-[#7a5900] rounded-lg p-2">
+                לא הוגדרו תנאי תשלום, אחריות ותוקף, ולכן הם לא יופיעו בהצעה. אפשר להוסיף כאן ב"ערוך" או בהגדרות. (ההערה הזו לא מופיעה ב-PDF)
+              </div>
+            )}
           </div>
 
           {/* חתימה */}

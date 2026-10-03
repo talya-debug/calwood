@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { SignedIn, SignedOut, SignIn, SignUp, useUser } from '@clerk/clerk-react'
-import { isOnboardingDone, syncFromServer } from './utils/storage'
+import { isOnboardingDone, syncFromServer, resetCacheIfUserChanged } from './utils/storage'
 import { isDemoMode, DEMO_USER_ID } from './utils/demo'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
@@ -55,6 +55,7 @@ function SyncWrapper({ demoUserId }) {
     if (userId) {
       // שומר clerk_id לשימוש ב-API calls
       window.__clerkUserId = userId
+      resetCacheIfUserChanged(userId)
       syncFromServer().then(() => setSynced(true)).catch(() => setSynced(true))
     }
   }, [userId])

@@ -29,6 +29,16 @@ async function apiFetch(path, options = {}) {
   return res.json()
 }
 
+// עיגול שדות מספריים של חומר ל-2 ספרות אחרי הנקודה
+const NUMERIC_FIELDS = ['price_per_unit', 'width', 'height', 'piece_length', 'board_width', 'coverage', 'pack_size']
+export function roundMaterial(m) {
+  const out = { ...m }
+  for (const f of NUMERIC_FIELDS) {
+    if (out[f] !== undefined && out[f] !== null && out[f] !== '') out[f] = Math.round(Number(out[f]) * 100) / 100
+  }
+  return out
+}
+
 // === קאש מקומי ===
 function cacheSet(key, data) {
   try { localStorage.setItem(PREFIX + key, JSON.stringify(data)) } catch {}
@@ -68,8 +78,8 @@ export async function fetchMaterials() {
   try {
     const materials = await apiFetch('materials')
     if (materials.length > 0) {
-      // ממפה mat_id ל-id לתאימות עם המנועים
-      const mapped = materials.map(m => ({ ...m, id: m.mat_id }))
+      // ממפה mat_id ל-id לתאימות עם המנועים, ומעגל מספרים (השרת מחזיר למשל 22.09000015258789)
+      const mapped = materials.map(m => roundMaterial({ ...m, id: m.mat_id }))
       cacheSet('materials', mapped)
       return mapped
     }
@@ -165,8 +175,7 @@ function getDefaultProfile() {
     supplier_discount: 0, pergola_days_with_helper: 3, pergola_days_alone: 5,
     deck_days_with_helper: 2, deck_days_alone: 3.5,
     logo_url: '', brand_color: '#2d5a3d', quote_title: 'הצעת מחיר',
-    payment_terms: '40% מקדמה בתחילת העבודה, 60% בסיום',
-    warranty_text: 'אחריות 5 שנים על עבודה', validity_text: 'ההצעה בתוקף ל-14 יום',
+    payment_terms: '', warranty_text: '', validity_text: '',
     included_list: ['חומרים', 'עבודה', 'הובלה לאתר', 'שימון/לכה', 'בסיסי בטון'],
     excluded_list: ['תאורה / חשמל בפרגולה', 'ניקוז / אינסטלציה מתחת לדק', 'פינוי עודפי חומרים', 'הכנת שטח / פיזור אדמה'],
     onboarding_done: false,

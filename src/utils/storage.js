@@ -56,9 +56,10 @@ export function getBranding() {
     logo_url: '',
     brand_color: '#2d5a3d',
     quote_title: 'הצעת מחיר',
-    payment_terms: '40% מקדמה בתחילת העבודה, 60% בסיום',
-    warranty_text: 'אחריות 5 שנים על עבודה',
-    validity_text: 'ההצעה בתוקף ל-14 יום',
+    // תנאים — ריקים עד שהקבלן בוחר (בהגדרה הראשונית או בהגדרות). לא מתחייבים בשמו
+    payment_terms: '',
+    warranty_text: '',
+    validity_text: '',
     included_list: ['חומרים', 'עבודה', 'הובלה לאתר', 'שימון/לכה', 'בסיסי בטון'],
     excluded_list: ['תאורה / חשמל בפרגולה', 'ניקוז / אינסטלציה מתחת לדק', 'פינוי עודפי חומרים', 'הכנת שטח / פיזור אדמה'],
   })
@@ -80,6 +81,7 @@ export function getMaterials() {
     }
     _materialsVersionChecked = true
   }
+  // מעוגל גם בקריאה — לקאש ישן שנשמר לפני התיקון
   return load('materials', [
     // === עמודים ===
     // piece_length = אורך יחידה מהספק (מטר). המנוע מחשב כמה יחידות צריך.
@@ -132,11 +134,11 @@ export function getMaterials() {
 
     // === אחר ===
     { id: 80, category: 'אחר', name: 'מדרגה (חומר+עבודה)', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 800, supplier: '', is_active: true },
-  ])
+  ]).map(roundMaterial)
 }
 
 export function saveMaterials(materials) {
-  save('materials', materials)
+  save('materials', materials.map(roundMaterial))
 }
 
 // --- הצעות מחיר ---
@@ -193,10 +195,27 @@ export function setOnboardingDone() {
   save('onboarding_done', true)
 }
 
+// --- החלפת משתמש ---
+// הקאש המקומי משותף לדפדפן. אם נכנס משתמש אחר — מנקים, כדי שלא יראה נתונים של קודמו
+export function resetCacheIfUserChanged(userId) {
+  try {
+    const last = localStorage.getItem(PREFIX + 'user')
+    if (last && last !== userId) {
+      const keys = []
+      for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i))
+      keys.filter(k => k && (k.startsWith(PREFIX) || k.startsWith('calwood_')))
+        .forEach(k => localStorage.removeItem(k))
+      _materialsVersionChecked = false
+    }
+    localStorage.setItem(PREFIX + 'user', userId)
+  } catch {}
+}
+
 // --- סנכרון עם השרת ---
 import { fetchProfile, updateProfile as apiUpdateProfile, fetchMaterials, saveMaterialsToServer,
   fetchClients, createClient as apiCreateClient, removeClient as apiRemoveClient,
-  fetchQuotes, createQuote as apiCreateQuote, updateQuote as apiUpdateQuote, removeQuote as apiRemoveQuote
+  fetchQuotes, createQuote as apiCreateQuote, updateQuote as apiUpdateQuote, removeQuote as apiRemoveQuote,
+  roundMaterial
 } from './api'
 
 // מושך את כל הנתונים מהשרת לקאש מקומי

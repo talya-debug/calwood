@@ -234,9 +234,10 @@ export default function Settings() {
 
           <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
             <h3 className="text-lg font-bold text-[#1a1c1a]">תנאים וטקסטים</h3>
-            <Field label="תנאי תשלום" value={branding.payment_terms} onChange={v => updateBranding('payment_terms', v)} multiline placeholder="40% מקדמה, 60% בסיום" />
-            <Field label="אחריות" value={branding.warranty_text} onChange={v => updateBranding('warranty_text', v)} multiline placeholder="אחריות 5 שנים על עבודה" />
-            <Field label="תוקף הצעה" value={branding.validity_text} onChange={v => updateBranding('validity_text', v)} placeholder="ההצעה בתוקף ל-14 יום" />
+            <p className="text-xs text-[#717971]">שדה ריק לא יופיע בהצעה.</p>
+            <Field label="תנאי תשלום" value={branding.payment_terms} onChange={v => updateBranding('payment_terms', v)} multiline placeholder="לדוגמה: 40% מקדמה, 60% בסיום" />
+            <Field label="אחריות" value={branding.warranty_text} onChange={v => updateBranding('warranty_text', v)} multiline placeholder="לדוגמה: אחריות שנה על העבודה" />
+            <Field label="תוקף הצעה" value={branding.validity_text} onChange={v => updateBranding('validity_text', v)} placeholder="לדוגמה: ההצעה בתוקף ל-14 יום" />
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
@@ -369,7 +370,7 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
         <div className="flex items-center gap-3">
           {/* מחיר — בולט */}
           <div className="bg-[#fdce6c] px-3 py-1 rounded-lg text-sm font-bold text-[#7a5900]">
-            {mat.price_per_unit}₪
+            {Number(mat.price_per_unit || 0).toLocaleString('he-IL', { maximumFractionDigits: 2 })}₪
           </div>
           <div className="text-right">
             <div className="font-bold text-[#1a1c1a] text-base">{displayName}</div>
