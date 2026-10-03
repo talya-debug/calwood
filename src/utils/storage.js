@@ -233,24 +233,43 @@ export async function saveMaterialsAndSync(materials) {
   try { await saveMaterialsToServer(materials) } catch {}
 }
 
-// שומר לקוח גם מקומית וגם בשרת
+// מזהה שרת (uuid) — להבדיל ממזהה זמני מקומי
+const isServerId = (id) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)
+
+// מחליף מזהה זמני במזהה מהשרת, כדי שעדכונים ומחיקות יגיעו לשרת
+function replaceLocalId(key, oldId, row) {
+  if (!row || !isServerId(row.id)) return null
+  const list = load(key, [])
+  const idx = list.findIndex(x => x.id === oldId)
+  if (idx < 0) return null
+  list[idx] = { ...list[idx], id: row.id, created_at: row.created_at || list[idx].created_at }
+  save(key, list)
+  return list[idx]
+}
+
+// שומר לקוח גם מקומית וגם בשרת. מחזיר את הלקוח עם המזהה הסופי
 export async function saveClientAndSync(client) {
-  const saved = saveClient(client) // localStorage
-  try { await apiCreateClient(client) } catch {}
+  const saved = saveClient({ ...client }) // localStorage
+  try {
+    const row = await apiCreateClient(client)
+    return replaceLocalId('clients', saved.id, row) || saved
+  } catch {}
   return saved
 }
 
-// שומר הצעה גם מקומית וגם בשרת
+// שומר הצעה גם מקומית וגם בשרת. מחזיר את ההצעה עם המזהה הסופי
 export async function saveQuoteAndSync(quote) {
-  const saved = saveQuote(quote) // localStorage
+  const saved = saveQuote({ ...quote }) // localStorage
   try {
-    await apiCreateQuote({
+    const row = await apiCreateQuote({
       type: quote.type,
       status: quote.status,
       dimensions: quote.dimensions,
       result: quote.result,
-      client_info: quote.client,
+      client_id: isServerId(quote.client?.id) ? quote.client.id : null,
+      client_info: quote.client || {},
     })
+    return replaceLocalId('quotes', saved.id, row) || saved
   } catch {}
   return saved
 }

@@ -123,7 +123,8 @@ export async function removeClient(id) {
 // === הצעות ===
 export async function fetchQuotes() {
   try {
-    const quotes = await apiFetch('quotes')
+    // בשרת הלקוח נשמר ב-client_info — מנרמלים ל-client כמו בשאר האפליקציה
+    const quotes = (await apiFetch('quotes')).map(q => ({ ...q, client: q.client || q.client_info || null }))
     cacheSet('quotes', quotes)
     return quotes
   } catch {

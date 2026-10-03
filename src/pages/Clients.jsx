@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getClients, saveClient, deleteClient, getQuotes, saveClientAndSync, deleteClientAndSync } from '../utils/storage'
+import { getClients, getQuotes, saveClientAndSync, deleteClientAndSync } from '../utils/storage'
+import { matchesSearch } from '../utils/search'
 import { Plus, Trash2, Search, Phone, MapPin, X, ChevronDown, ChevronUp, Calendar } from 'lucide-react'
 
 const typeNames = { pergola: 'פרגולה', deck: 'דק' }
 
 function ClientCard({ client, handleDelete }) {
   const [expanded, setExpanded] = useState(false)
-  const clientQuotes = getQuotes().filter(q => q.client?.name === client.name)
+  // שיוך לפי מזהה, ולהצעות ישנות בלי מזהה — לפי שם
+  const clientQuotes = getQuotes().filter(q => (q.client?.id && q.client.id === client.id) || (!q.client?.id && q.client?.name === client.name))
   const fmt = (n) => Number(n || 0).toLocaleString('he-IL')
 
   return (
@@ -76,12 +78,14 @@ export default function Clients() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', city: '' })
 
-  const filtered = clients.filter(c => !search || c.name.includes(search) || (c.phone || '').includes(search))
+  const filtered = clients.filter(c => matchesSearch(search, c.name, c.phone, c.city))
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) return
-    saveClient({ ...form }); saveClientAndSync(form); setClients(getClients())
+    // שמירה אחת בלבד (קודם נשמר פעמיים ונוצר לקוח כפול)
     setForm({ name: '', phone: '', city: '' }); setShowForm(false)
+    await saveClientAndSync({ ...form, name: form.name.trim() })
+    setClients(getClients())
   }
 
   const handleDelete = (id) => { deleteClientAndSync(id); setClients(getClients()) }

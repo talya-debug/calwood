@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getQuotes, deleteQuote, saveQuote, getProfile, getBranding, deleteQuoteAndSync, updateQuoteStatusAndSync } from '../utils/storage'
 import { Trash2, Download, Search, Plus, ChevronDown, Calendar, MoreHorizontal } from 'lucide-react'
 import { generateQuotePDF } from '../utils/pdf'
+import { matchesSearch } from '../utils/search'
 
 const STATUSES = [
   { key: 'draft', text: 'טיוטה', dot: 'bg-[#717971]', bg: 'bg-[#e7e9e4] text-[#414942]' },
@@ -17,10 +18,8 @@ export default function Quotes() {
   const [search, setSearch] = useState('')
   const [statusMenu, setStatusMenu] = useState(null)
 
-  const filtered = quotes.filter(q => {
-    if (!search) return true
-    return (q.client?.name || '').includes(search) || (typeNames[q.type] || '').includes(search)
-  })
+  const filtered = quotes.filter(q =>
+    matchesSearch(search, q.client?.name, q.client?.phone, q.client?.city, typeNames[q.type]))
 
   const handleDelete = (id) => { deleteQuoteAndSync(id); setQuotes(getQuotes()) }
   const handleStatus = (id, s) => { const q = quotes.find(x => x.id === id); if (q) { q.status = s; saveQuote(q); updateQuoteStatusAndSync(q); setQuotes(getQuotes()) }; setStatusMenu(null) }
@@ -81,7 +80,7 @@ export default function Quotes() {
                     <h4 className="font-bold text-[#1a1c1a] text-base">
                       {typeNames[quote.type]} {dims.width && dims.length ? `(${dims.length}x${dims.width})` : ''}
                     </h4>
-                    {quote.client?.name && <p className="text-sm text-[#717971]">{quote.client.name}</p>}
+                    <p className="text-sm text-[#717971]">{quote.client?.name || 'ללא לקוח'}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-t border-[#edeeea] pt-2">

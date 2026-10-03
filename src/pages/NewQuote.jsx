@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { calculatePergola } from '../engine/pergola'
 import { calculateDeck, WOOD_TYPES } from '../engine/deck'
-import { getProfile, getBranding, getClients, saveQuote, saveClient, saveQuoteAndSync, saveClientAndSync } from '../utils/storage'
+import { getProfile, getBranding, getClients, saveQuoteAndSync, saveClientAndSync } from '../utils/storage'
+import { matchesSearch } from '../utils/search'
 import { generateMaterialsPDF } from '../utils/pdf'
 import QuotePreview from '../components/QuotePreview'
 import { ChevronDown, ChevronUp, Save, Check, UserPlus, Search, ClipboardList, FileText, Settings2 } from 'lucide-react'
@@ -67,6 +68,9 @@ export default function NewQuote() {
     stairs: '', supportBeam: false,
   })
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [savedResult, setSavedResult] = useState(null)
+  const [clientSearch, setClientSearch] = useState('')
   const [showPreview, setShowPreview] = useState(false)
   const [expandedSections, setExpandedSections] = useState({})
 
@@ -85,12 +89,20 @@ export default function NewQuote() {
     return workType === 'pergola' ? calculatePergola(d, [], [], profile) : calculateDeck(d, [], [], profile)
   }, [workType, dims, hasInput])
 
-  const handleSave = () => {
-    if (!result) return
-    if (client.name && !client.id) { const s = saveClient({ ...client }); client.id = s.id; saveClientAndSync(client) }
-    const q = { type: workType, client: { id: client.id, name: client.name, phone: client.phone },
+  const handleSave = async () => {
+    // אותו חישוב כבר נשמר — לא יוצרים הצעה כפולה
+    if (!result || saving || savedResult === result) return
+    setSaving(true)
+    let c = client
+    if (client.name && !client.id) {
+      c = await saveClientAndSync(client)
+      setClient(c)
+    }
+    const q = { type: workType, client: c.name ? { id: c.id, name: c.name, phone: c.phone || '', city: c.city || '' } : null,
       dimensions: dims, result, status: 'draft' }
-    saveQuote(q); saveQuoteAndSync(q)
+    await saveQuoteAndSync(q)
+    setSaving(false)
+    setSavedResult(result)
     setSaved(true); setTimeout(() => setSaved(false), 3000)
   }
 
@@ -145,7 +157,7 @@ export default function NewQuote() {
           {/* חיפוש */}
           <div className="relative">
             <Search size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#717971]" />
-            <input placeholder="חיפוש לפי שם או טלפון..."
+            <input value={clientSearch} onChange={e => setClientSearch(e.target.value)} placeholder="חיפוש לפי שם או טלפון..."
               className="w-full h-12 pr-11 pl-4 border border-[#c1c9c0] rounded-2xl bg-white text-sm focus:border-[#2d5a3d] focus:border-2 outline-none" />
           </div>
 
@@ -154,7 +166,10 @@ export default function NewQuote() {
             <div>
               <p className="text-sm text-[#414942] font-medium mb-2 text-right">לקוחות קיימים</p>
               <div className="space-y-2">
-                {getClients().slice(0, 5).map(c => (
+                {getClients().filter(c => matchesSearch(clientSearch, c.name, c.phone, c.city)).length === 0 && (
+                  <p className="text-sm text-[#717971] text-center py-2">לא נמצא לקוח בשם הזה</p>
+                )}
+                {getClients().filter(c => matchesSearch(clientSearch, c.name, c.phone, c.city)).slice(0, clientSearch ? 20 : 5).map(c => (
                   <button key={c.id} onClick={() => { setClient(c); setStep(3) }}
                     className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all
                       ${client.id === c.id ? 'border-[#2d5a3d] bg-[#bceec8]/10' : 'border-[#e7e9e4] bg-white'}`}>
@@ -381,10 +396,10 @@ export default function NewQuote() {
               </div>
 
               {/* כפתורים */}
-              <button onClick={handleSave}
+              <button onClick={handleSave} disabled={saving}
                 className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-lg
-                  ${saved ? 'bg-[#3ba55c] text-white' : 'bg-[#C45D3E] text-white shadow-[#C45D3E]/20 hover:brightness-110 active:scale-[0.98]'}`}>
-                {saved ? <><Check size={20} /> ההצעה נשמרה!</> : <><Save size={20} /> שמור הצעה</>}
+                  ${saved || savedResult === result ? 'bg-[#3ba55c] text-white' : 'bg-[#C45D3E] text-white shadow-[#C45D3E]/20 hover:brightness-110 active:scale-[0.98]'}`}>
+                {saving ? 'שומר...' : saved || savedResult === result ? <><Check size={20} /> ההצעה נשמרה{client.name ? ` (${client.name})` : ''}</> : <><Save size={20} /> שמור הצעה</>}
               </button>
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => setShowPreview(true)}
