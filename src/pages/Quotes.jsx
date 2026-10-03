@@ -4,13 +4,8 @@ import { getQuotes, deleteQuote, saveQuote, getProfile, getBranding, deleteQuote
 import { Trash2, Download, Search, Plus, ChevronDown, Calendar, MoreHorizontal } from 'lucide-react'
 import { generateQuotePDF } from '../utils/pdf'
 import { matchesSearch } from '../utils/search'
+import { STATUSES } from '../utils/statuses'
 
-const STATUSES = [
-  { key: 'draft', text: 'טיוטה', dot: 'bg-[#717971]', bg: 'bg-[#e7e9e4] text-[#414942]' },
-  { key: 'sent', text: 'נשלח', dot: 'bg-blue-500', bg: 'bg-blue-50 text-blue-700' },
-  { key: 'approved', text: 'מאושר', dot: 'bg-[#2d5a3d]', bg: 'bg-[#bceec8]/30 text-[#144227]' },
-  { key: 'rejected', text: 'נדחה', dot: 'bg-red-400', bg: 'bg-red-50 text-red-600' },
-]
 const typeNames = { pergola: 'פרגולה', deck: 'דק' }
 
 export default function Quotes() {

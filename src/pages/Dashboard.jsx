@@ -2,6 +2,7 @@ import { useUser } from '@clerk/clerk-react'
 import { Link } from 'react-router-dom'
 import { Plus, Calendar, MoreHorizontal, ChevronLeft } from 'lucide-react'
 import { getQuotes, getProfile } from '../utils/storage'
+import { dashboardStats, getStatus } from '../utils/statuses'
 
 const typeNames = { pergola: 'פרגולה', deck: 'דק' }
 
@@ -11,12 +12,7 @@ export default function Dashboard() {
   const quotes = getQuotes()
   const profile = getProfile()
 
-  const thisMonth = quotes.filter(q => {
-    const d = new Date(q.created_at); const now = new Date()
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  })
-  const approved = thisMonth.filter(q => q.status === 'approved')
-  const totalRevenue = approved.reduce((sum, q) => sum + (q.result?.totals?.total || 0), 0)
+  const stats = dashboardStats(quotes)
   const fmt = (n) => Number(n || 0).toLocaleString('he-IL')
   const recentQuotes = quotes.slice(0, 5)
 
@@ -45,20 +41,25 @@ export default function Dashboard() {
       </Link>
 
       {/* סטטיסטיקות — מספרים בצבע דבש */}
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-2 gap-3">
         <div className="bg-white border border-[#E8E4DB] rounded-xl p-4 flex flex-col items-center text-center">
-          <span className="text-[#7a5900] text-2xl font-bold">₪{fmt(totalRevenue)}</span>
-          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1 uppercase">הכנסות</span>
+          <span className="text-[#144227] text-2xl font-bold">₪{fmt(stats.approvedTotal)}</span>
+          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1">עבודות מאושרות החודש</span>
         </div>
         <div className="bg-white border border-[#E8E4DB] rounded-xl p-4 flex flex-col items-center text-center">
-          <span className="text-[#7a5900] text-2xl font-bold">{thisMonth.length}</span>
-          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1 uppercase">הצעות החודש</span>
+          <span className="text-[#7a5900] text-2xl font-bold">₪{fmt(stats.collectedTotal)}</span>
+          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1">נגבה החודש</span>
         </div>
         <div className="bg-white border border-[#E8E4DB] rounded-xl p-4 flex flex-col items-center text-center">
-          <span className="text-[#7a5900] text-2xl font-bold">{thisMonth.length > 0 ? Math.round((approved.length / thisMonth.length) * 100) : 0}%</span>
-          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1 uppercase">אחוז סגירה</span>
+          <span className="text-[#7a5900] text-2xl font-bold">{stats.monthCount}</span>
+          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1">הצעות החודש</span>
+        </div>
+        <div className="bg-white border border-[#E8E4DB] rounded-xl p-4 flex flex-col items-center text-center">
+          <span className="text-[#7a5900] text-2xl font-bold">{stats.closeRate}%</span>
+          <span className="text-[11px] font-bold text-[#717971] tracking-wider mt-1">אחוז סגירה</span>
         </div>
       </section>
+      <p className="text-[11px] text-[#717971] text-center -mt-5">סכומים כולל מע"מ. "נגבה" מתעדכן כשמסמנים הצעה כ"שולם".</p>
 
       {/* השלם פרופיל — צהוב/דבש */}
       {!profile.business_name && (
@@ -95,14 +96,7 @@ export default function Dashboard() {
           recentQuotes.map(quote => {
             const dims = quote.dimensions || {}
             const date = quote.created_at ? new Date(quote.created_at).toLocaleDateString('he-IL') : ''
-            const s = quote.status || 'draft'
-            const statusStyles = {
-              draft: { bg: 'bg-stone-100 text-stone-600', dot: 'bg-stone-400', text: 'טיוטה' },
-              sent: { bg: 'bg-blue-50 text-blue-700', dot: 'bg-blue-500', text: 'נשלח' },
-              approved: { bg: 'bg-green-100 text-green-800', dot: 'bg-green-600', text: 'מאושר' },
-              rejected: { bg: 'bg-red-50 text-red-600', dot: 'bg-red-400', text: 'נדחה' },
-            }
-            const st = statusStyles[s] || statusStyles.draft
+            const st = getStatus(quote.status)
 
             return (
               <div key={quote.id} className="bg-white border border-[#E8E4DB] rounded-xl p-5 space-y-3">
