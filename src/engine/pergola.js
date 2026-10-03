@@ -3,6 +3,7 @@
  */
 import { getMaterials } from '../utils/storage'
 import { buildBreakdown } from './breakdown'
+import { cutPlan, describeCutPlan, fmtM, round2 } from './stock'
 
 // ברירות מחדל — משמשות רק אם הקבלן לא שינה במחירון
 const DEFAULTS = {
@@ -60,43 +61,68 @@ export function calculatePergola(dims, rules, materialsList, profile) {
   const postPrice = getPrice(materials, postSize === '20x20' ? 'post_20' : 'post_15')
   const bracketPrice = disc(getPrice(materials, 'bracket'))
 
-  // === כתב כמויות — נוסחאות מהאקסל ===
-  let postCount
-  if (attachType === 'wall') {
-    postCount = Math.ceil(L / MAX_SPAN) + 1
-  } else {
-    postCount = (Math.ceil(W / MAX_SPAN) + 1) * (Math.ceil(L / MAX_SPAN) + 1)
-  }
-
-  const postMeters = postCount * height
-  const supportMeters = W * (Math.ceil(L / MAX_SPAN) + 1)
+  // === כמויות — נוסחאות מהאקסל ===
+  // צירים: L = לאורך הקיר (ציר x), W = עומק מהקיר (ציר y). בצמוד קיר — הקיר בצד y=0
+  const supportCount = Math.ceil(L / MAX_SPAN - 1e-9) + 1        // תומכים לאורך L, כל אחד באורך W
+  const postRows = attachType === 'wall' ? 1 : Math.ceil(W / MAX_SPAN - 1e-9) + 1
+  const postCount = supportCount * postRows
   const baseBeamSpacing = 0.75
-  const baseBeamCount = Math.ceil(W / baseBeamSpacing) + 1
-  const baseBeamMeters = baseBeamCount * L
-  const roofBeamMeters = (Math.ceil(L / 0.6) + 1) * W
+  const baseBeamCount = Math.ceil(W / baseBeamSpacing - 1e-9) + 1 // קורות תשתית לאורך W, כל אחת באורך L
+  const roofBeamCount = Math.ceil(L / 0.6 - 1e-9) + 1             // קורות גג לאורך L, כל אחת באורך W
   const concreteBags = Math.ceil(postCount * 2.5)
   const bracketsBase = postCount
   const bracketsWall = attachType === 'wall' ? baseBeamCount : 0
-  const area = L * W
+  const area = round2(L * W)
+
+  // מיקומים (מ') — מקור אחד לשרטוט
+  const spread = (n, total) => Array.from({ length: n }, (_, i) => (n > 1 ? round2(i * total / (n - 1)) : 0))
+  const supportX = spread(supportCount, L)
+  const postY = attachType === 'wall' ? [W] : spread(postRows, W)
+  const layout = {
+    L, W, attachType,
+    supports: supportX,
+    posts: supportX.flatMap(x => postY.map(y => [x, y])),
+    baseBeams: spread(baseBeamCount, W),
+    roofBeams: spread(roofBeamCount, L),
+  }
+
+  // תוכניות חיתוך — חיבור רק מעל תמיכה
+  const supportGap = supportCount > 1 ? L / (supportCount - 1) : L
+  const baseGap = baseBeamCount > 1 ? W / (baseBeamCount - 1) : W
+  const postPlan = cutPlan({ runLength: height, count: postCount,
+    stockLength: getPieceLength(materials, postSize === '20x20' ? 'post_20' : 'post_15') })
+  // תומך: בעצמאית נשען על שורות עמודים; בצמוד קיר נמתח מהקיר לעמוד — אסור לחבר באמצע
+  const supportPlan = cutPlan({ runLength: W, count: supportCount, stockLength: getPieceLength(materials, 'beam_52x160'),
+    spliceSpacing: attachType === 'wall' ? null : W / (postRows - 1) })
+  const basePlan = cutPlan({ runLength: L, count: baseBeamCount, stockLength: getPieceLength(materials, 'joist_52x105'),
+    spliceSpacing: supportGap })
+  const roofPlan = cutPlan({ runLength: W, count: roofBeamCount, stockLength: getPieceLength(materials, 'joist_52x105'),
+    spliceSpacing: baseGap })
+
+  // חתכים — כפי שמתומחרים בפועל מהמחירון
+  const sectionOf = (key, fallback) => {
+    const mat = materials.find(m => m.id === DEFAULTS[key].id)
+    return mat?.width && mat?.height ? `${fmtM(mat.width)}x${fmtM(mat.height)}` : fallback
+  }
+  const supportSection = sectionOf('beam_52x160', '5x15')
+  const baseBeamSection = sectionOf('joist_52x105', '5x10')
+  const roofBeamSection = baseBeamSection
 
   // === עלויות ===
   const lineItems = []
+  const stockLine = (name, plan, price, runName, extra = '') => {
+    const cost = Math.round(plan.purchasedM * price)
+    lineItems.push({ name, quantity: plan.bars,
+      unit: plan.specialLength && plan.patterns.every(p => p.special) ? `יח' באורך ${fmtM(plan.specialLength)} מ'` : `יח' של ${fmtM(plan.stockLength)} מ'`,
+      detail: `${extra}פחת ${fmtM(plan.wasteM)} מ' (${plan.wastePct}%)`,
+      cost, wasteCost: Math.round(plan.wasteM * price), cutPlan: describeCutPlan(plan, runName) })
+    return cost
+  }
 
-  const costPosts = Math.round(postMeters * postPrice)
-  lineItems.push({ name: `עמודים ${postSize}`, quantity: postCount, unit: "יח'",
-    detail: `${postMeters} מ' ריצה`, cost: costPosts })
-
-  const costSupport = Math.round(supportMeters * ep_beam)
-  lineItems.push({ name: 'תומך תשתית', quantity: Math.ceil(L / MAX_SPAN) + 1, unit: "יח'",
-    detail: `${supportMeters} מ' × ${ep_beam} ₪/מ'`, cost: costSupport })
-
-  const costBaseBeams = Math.round(baseBeamMeters * ep_joist)
-  lineItems.push({ name: 'קורות תשתית', quantity: baseBeamCount, unit: "יח'",
-    detail: `${baseBeamMeters} מ' × ${ep_joist} ₪/מ'`, cost: costBaseBeams })
-
-  const costRoofBeams = Math.round(roofBeamMeters * ep_joist)
-  lineItems.push({ name: 'קורות גג', quantity: Math.ceil(L / 0.6) + 1, unit: "יח'",
-    detail: `${roofBeamMeters} מ' × ${ep_joist} ₪/מ'`, cost: costRoofBeams })
+  const costPosts = stockLine(`עמודים ${postSize}`, postPlan, postPrice, 'עמוד', `${postCount} עמודים בגובה ${fmtM(height)} מ' | `)
+  const costSupport = stockLine(`תומך תשתית ${supportSection}`, supportPlan, ep_beam, 'תומך', `${supportCount} תומכים באורך ${fmtM(W)} מ' | `)
+  const costBaseBeams = stockLine(`קורות תשתית ${baseBeamSection}`, basePlan, ep_joist, 'קורת תשתית', `${baseBeamCount} קורות באורך ${fmtM(L)} מ' | `)
+  const costRoofBeams = stockLine(`קורות גג ${roofBeamSection}`, roofPlan, ep_joist, 'קורת גג', `${roofBeamCount} קורות באורך ${fmtM(W)} מ' | `)
 
   const costConcrete = Math.ceil(concreteBags) * getPrice(materials, 'concrete')
   lineItems.push({ name: 'בטון', quantity: Math.ceil(concreteBags), unit: 'שקים', detail: '', cost: costConcrete })
@@ -121,7 +147,7 @@ export function calculatePergola(dims, rules, materialsList, profile) {
   }
   if (costCover > 0) {
     const rn = { santef: 'סנטף', bh: 'BH גלי', thermo: 'עץ טרמו' }
-    lineItems.push({ name: `קירוי — ${rn[roofType]}`, quantity: 1, unit: '', detail: `${area} מ"ר`, cost: costCover })
+    lineItems.push({ name: `קירוי — ${rn[roofType]}`, quantity: 1, unit: '', detail: `${fmtM(area)} מ"ר`, cost: costCover })
   }
 
   // עבודה — קצב לפי פרופיל הקבלן
@@ -166,7 +192,9 @@ export function calculatePergola(dims, rules, materialsList, profile) {
     type: 'pergola',
     dimensions: { width: W, length: L, height, postSize, attachType, roofType, access, helperType },
     area,
-    engineering: { postCount, supportMeters, baseBeamMeters, roofBeamMeters },
+    // מקור אחד לשרטוט ולכתב הכמויות
+    engineering: { postCount, supportCount, baseBeamCount, roofBeamCount, postRows,
+      supportSection, baseBeamSection, roofBeamSection, layout },
     lineItems,
     labor: { days: workDays, owner: costLaborOwner, helper: costLaborHelper, total: costLaborOwner + costLaborHelper },
     travel: travelCost, accessCost: costAccess,

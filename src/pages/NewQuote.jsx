@@ -248,7 +248,7 @@ export default function NewQuote() {
                 <div>
                   <label className="block text-sm text-[#414942] mb-2 font-medium">סוג התקנה</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {[{ v: 'wall', l: 'צמוד קיר' }, { v: 'free', l: 'עצמאי (4 רגליים)' }].map(o => (
+                    {[{ v: 'wall', l: 'צמוד קיר' }, { v: 'free', l: 'עצמאי (בלי קיר)' }].map(o => (
                       <button key={o.v} onClick={() => setDim('attachType', o.v)}
                         className={`py-3 rounded-xl text-sm font-bold transition-all
                           ${dims.attachType === o.v ? 'bg-[#2d5a3d] text-white' : 'bg-[#e7e9e4] text-[#414942]'}`}>
@@ -256,6 +256,12 @@ export default function NewQuote() {
                       </button>
                     ))}
                   </div>
+                  {result?.engineering?.postCount > 0 && (
+                    <p className="text-xs text-[#717971] mt-1.5">
+                      יחושבו {result.engineering.postCount} עמודים — עמוד לפחות כל 3 מ'
+                      {dims.attachType === 'free' ? ` (${result.engineering.supportCount} לאורך × ${result.engineering.postRows} לעומק)` : ' לאורך הצד הפתוח'}
+                    </p>
+                  )}
                 </div>
 
                 {/* גובה */}
@@ -338,14 +344,13 @@ export default function NewQuote() {
 
           {/* שרטוט */}
           {result && workType === 'pergola' && (
-            <PergolaSketch width={parseFloat(dims.width)} length={parseFloat(dims.length)} height={parseFloat(dims.height) || 3}
-              postCount={result.engineering?.postCount} attachType={dims.attachType} roofType={dims.roofType}
-              baseBeamSection={result.engineering?.baseBeamSection} supportSection={result.engineering?.supportSection} />
+            <PergolaSketch engineering={result.engineering} height={parseFloat(dims.height) || 3} roofType={dims.roofType} />
           )}
           {result && workType === 'deck' && (
             <DeckSketch width={parseFloat(dims.width)} length={parseFloat(dims.length)}
               direction={dims.direction} woodType={dims.woodType} height={dims.height} stairs={parseInt(dims.stairs) || 0}
-              joistCount={result.engineering?.joistCount} />
+              joistCount={result.engineering?.joistCount} boardRows={result.engineering?.boardRows}
+              boardPieces={result.engineering?.boardPieces} joistPieces={result.engineering?.joistPieces} />
           )}
 
           {/* תוצאות */}
@@ -381,6 +386,12 @@ export default function NewQuote() {
                         <span className="text-[#717971] text-right">
                           {item.name}{item.unit ? ` — ${item.quantity} ${item.unit}` : ''}
                           {item.detail && <span className="block text-[11px]">{item.detail}</span>}
+                          {item.cutPlan?.length > 0 && (
+                            <span className="block text-[11px] text-[#2d5a3d] bg-[#bceec8]/15 rounded-md px-2 py-1 mt-1" data-cut-plan>
+                              <span className="font-bold">תוכנית חיתוך: </span>
+                              {item.cutPlan.map((c, k) => <span key={k} className="block">{c}</span>)}
+                            </span>
+                          )}
                         </span>
                       </div>
                     ))}

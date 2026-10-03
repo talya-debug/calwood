@@ -1,134 +1,104 @@
 /**
- * שרטוט SVG של פרגולה — 3D אקסונומטרי + חתך צד
+ * שרטוט פרגולה — מבט מלמעלה. כל המיקומים מגיעים מהמנוע (engineering.layout),
+ * כך שהשרטוט מציג בדיוק את אותם עמודים, תומכים וקורות כמו בכתב הכמויות.
+ * ציר אופקי = L (לאורך הקיר), ציר אנכי = W (עומק). בצמוד קיר — הקיר למעלה.
  */
-export default function PergolaSketch({ width, length, height, postCount, attachType, roofType, baseBeamSection, supportSection }) {
-  if (!width || !length) return null
+const COLORS = { support: '#5C3317', base: '#A0522D', roof: '#C4A35A', post: '#1a1c1a', wall: '#9a9a9a' }
 
-  const svgW = 400
-  const svgH = 380
-  const pad = 35
+export default function PergolaSketch({ engineering, height, roofType }) {
+  const lay = engineering?.layout
+  if (!lay || !lay.L || !lay.W) return null
+  const { L, W } = lay
 
-  const scale = Math.min((svgW - pad * 2) / (width + length * 0.4), 180 / (height + length * 0.3))
-  const w = width * scale
-  const l = length * scale * 0.4
-  const h = height * scale * 0.55
+  // קנה מידה — שומר על פרופורציות
+  const maxW = 330, maxH = 230
+  const s = Math.min(maxW / L, maxH / W)
+  const dw = L * s, dh = W * s
+  const padX = 55, padTop = 50, padBottom = 30
+  const svgW = dw + padX * 2
+  const svgH = dh + padTop + padBottom
+  const X = (x) => padX + x * s
+  const Y = (y) => padTop + y * s
 
-  const ox = svgW - pad - l
-  const oy = 220
-
-  // 4 פינות רצפה
-  const flr = { fr: [ox, oy], fl: [ox - w, oy], br: [ox + l, oy - l], bl: [ox - w + l, oy - l] }
-  // 4 פינות גג
-  const top = {
-    fr: [flr.fr[0], flr.fr[1] - h], fl: [flr.fl[0], flr.fl[1] - h],
-    br: [flr.br[0], flr.br[1] - h], bl: [flr.bl[0], flr.bl[1] - h],
-  }
-
-  // עמודים
-  const posts = []
-  if (attachType === 'wall') {
-    for (let i = 0; i < postCount; i++) {
-      const t = postCount > 1 ? i / (postCount - 1) : 0
-      const bx = flr.fl[0] + (flr.fr[0] - flr.fl[0]) * t
-      posts.push({ b: [bx, flr.fl[1]], t: [bx, flr.fl[1] - h] })
-    }
-  } else {
-    const front = Math.ceil(postCount / 2)
-    const back = postCount - front
-    for (let i = 0; i < front; i++) {
-      const t = front > 1 ? i / (front - 1) : 0
-      const bx = flr.fl[0] + (flr.fr[0] - flr.fl[0]) * t
-      posts.push({ b: [bx, flr.fl[1]], t: [bx, flr.fl[1] - h] })
-    }
-    for (let i = 0; i < back; i++) {
-      const t = back > 1 ? i / (back - 1) : 0
-      const bx = flr.bl[0] + (flr.br[0] - flr.bl[0]) * t
-      posts.push({ b: [bx, flr.bl[1]], t: [bx, flr.bl[1] - h] })
-    }
-  }
-
-  // קורות גג
-  const roofBeamCount = Math.min(Math.ceil(length / 0.6) + 1, 14)
-  const roofBeams = []
-  for (let i = 0; i < roofBeamCount; i++) {
-    const t = roofBeamCount > 1 ? i / (roofBeamCount - 1) : 0
-    roofBeams.push({
-      l: [top.fl[0] + (top.bl[0] - top.fl[0]) * t, top.fl[1] + (top.bl[1] - top.fl[1]) * t],
-      r: [top.fr[0] + (top.br[0] - top.fr[0]) * t, top.fr[1] + (top.br[1] - top.fr[1]) * t],
-    })
-  }
-
-  const pt = (arr) => arr.join(',')
   const hasRoof = roofType && roofType !== 'none'
   const roofNames = { santef: 'סנטף', bh: 'BH גלי', thermo: 'עץ טרמו' }
+  const postSize = 9
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-5">
-      <h3 className="text-sm font-bold text-[#1a1c19] mb-3 text-right">שרטוט סכמתי</h3>
-      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full">
+      <h3 className="text-sm font-bold text-[#1a1c19] mb-3 text-right">שרטוט — מבט מלמעלה</h3>
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full" style={{ maxHeight: 420 }}>
         <rect x="0" y="0" width={svgW} height={svgH} fill="#fafaf5" rx="10" />
 
-        {/* קירוי */}
-        {hasRoof && (
-          <polygon points={`${pt(top.fl)} ${pt(top.fr)} ${pt(top.br)} ${pt(top.bl)}`}
-            fill="rgba(31,56,100,0.06)" stroke="#1F3864" strokeWidth="0.5" strokeDasharray="5,4" />
-        )}
-
-        {/* קורות גג */}
-        {roofBeams.map((beam, i) => (
-          <line key={`rb${i}`} x1={beam.l[0]} y1={beam.l[1]} x2={beam.r[0]} y2={beam.r[1]}
-            stroke="#C4A35A" strokeWidth="2.5" opacity="0.6" />
-        ))}
-
-        {/* קורות תשתית */}
-        <line x1={top.fl[0]} y1={top.fl[1]} x2={top.fr[0]} y2={top.fr[1]} stroke="#5C3317" strokeWidth="4" />
-        <line x1={top.bl[0]} y1={top.bl[1]} x2={top.br[0]} y2={top.br[1]} stroke="#5C3317" strokeWidth="4" />
-        <line x1={top.fl[0]} y1={top.fl[1]} x2={top.bl[0]} y2={top.bl[1]} stroke="#5C3317" strokeWidth="2.5" />
-        <line x1={top.fr[0]} y1={top.fr[1]} x2={top.br[0]} y2={top.br[1]} stroke="#5C3317" strokeWidth="2.5" />
-
-        {/* עמודים */}
-        {posts.map((post, i) => (
-          <g key={`p${i}`}>
-            <line x1={post.b[0]} y1={post.b[1]} x2={post.t[0]} y2={post.t[1]}
-              stroke="#5C3317" strokeWidth="5" strokeLinecap="round" />
-            {/* בסיס בטון */}
-            <rect x={post.b[0] - 6} y={post.b[1]} width={12} height={5} fill="#999" opacity="0.4" rx="1" />
-          </g>
-        ))}
-
         {/* קיר */}
-        {attachType === 'wall' && (
+        {lay.attachType === 'wall' && (
           <>
-            <line x1={top.bl[0] - 3} y1={top.bl[1] - 15} x2={top.br[0] - 3} y2={top.br[1] - 15}
-              stroke="#999" strokeWidth="12" opacity="0.15" />
-            <text x={(top.bl[0] + top.br[0]) / 2} y={(top.bl[1] + top.br[1]) / 2 - 20}
-              textAnchor="middle" fontSize="9" fill="#999">קיר בניין</text>
+            <rect x={X(0) - 8} y={Y(0) - 12} width={dw + 16} height={8} fill={COLORS.wall} opacity="0.35" />
+            <text x={X(L / 2)} y={Y(0) - 18} textAnchor="middle" fontSize="10" fill="#777">קיר הבניין</text>
           </>
         )}
 
-        {/* מידות */}
-        <text x={ox - w / 2} y={oy + 22} textAnchor="middle" fontSize="14" fill="#1F3864" fontWeight="bold">
-          {width} מ' (W)
-        </text>
-        <text x={ox + l / 2 + 12} y={oy - l / 2 + 6} textAnchor="start" fontSize="14" fill="#1F3864" fontWeight="bold">
-          {length} מ' (L)
-        </text>
-        <text x={ox - w - 10} y={oy - h / 2} textAnchor="end" fontSize="12" fill="#666">
-          {height} מ'
-        </text>
+        {/* קירוי */}
+        {hasRoof && <rect x={X(0)} y={Y(0)} width={dw} height={dh} fill="rgba(31,56,100,0.07)" />}
 
-        {/* מקרא */}
-        <rect x={pad - 10} y={svgH - 65} width={svgW - pad * 2 + 20} height={55} fill="white" rx="6" stroke="#eee" />
-        <text x={svgW - pad} y={svgH - 46} textAnchor="end" fontSize="11" fill="#1a1c19" fontWeight="bold">
-          {postCount} עמודים | {attachType === 'wall' ? 'צמודת קיר' : 'עצמאית'}
-        </text>
-        <text x={svgW - pad} y={svgH - 32} textAnchor="end" fontSize="10" fill="#666">
-          תומך: {supportSection || '—'} | תשתית: {baseBeamSection || '—'} | גג: 5x10
-        </text>
-        <text x={svgW - pad} y={svgH - 18} textAnchor="end" fontSize="10" fill="#666">
-          {Math.round(width * length)} מ"ר{hasRoof ? ` | קירוי: ${roofNames[roofType]}` : ''}
-        </text>
+        {/* תומכי תשתית — לאורך W, אחד בכל שורת עמודים */}
+        {lay.supports.map((x, i) => (
+          <line key={`s${i}`} data-part="support" x1={X(x)} y1={Y(0)} x2={X(x)} y2={Y(W)}
+            stroke={COLORS.support} strokeWidth="6" strokeLinecap="round" />
+        ))}
+
+        {/* קורות תשתית — לאורך L, מעל התומכים */}
+        {lay.baseBeams.map((y, i) => (
+          <line key={`b${i}`} data-part="base" x1={X(0)} y1={Y(y)} x2={X(L)} y2={Y(y)}
+            stroke={COLORS.base} strokeWidth="3.5" />
+        ))}
+
+        {/* קורות גג — לאורך W, העליונות */}
+        {lay.roofBeams.map((x, i) => (
+          <line key={`r${i}`} data-part="roof" x1={X(x)} y1={Y(0)} x2={X(x)} y2={Y(W)}
+            stroke={COLORS.roof} strokeWidth="1.8" opacity="0.9" />
+        ))}
+
+        {/* עמודים */}
+        {lay.posts.map(([x, y], i) => (
+          <rect key={`p${i}`} data-part="post" x={X(x) - postSize / 2} y={Y(y) - postSize / 2}
+            width={postSize} height={postSize} fill={COLORS.post} rx="1.5" />
+        ))}
+
+        {/* מידות */}
+        <line x1={X(0)} y1={Y(W) + 16} x2={X(L)} y2={Y(W) + 16} stroke="#1F3864" strokeWidth="1.2" />
+        <text x={X(L / 2)} y={Y(W) + 28} textAnchor="middle" fontSize="13" fill="#1F3864" fontWeight="bold">{fmt(L)} מ' (L)</text>
+        <line x1={X(L) + 16} y1={Y(0)} x2={X(L) + 16} y2={Y(W)} stroke="#1F3864" strokeWidth="1.2" />
+        {/* הדף מימין לשמאל — ולכן end = הטקסט נמתח ימינה מהנקודה, ולא עולה על קו המידה */}
+        <text x={X(L) + 22} y={Y(W / 2) + 4} textAnchor="end" fontSize="13" fill="#1F3864" fontWeight="bold">{fmt(W)} מ'</text>
+        <text x={X(L) + 22} y={Y(W / 2) + 18} textAnchor="end" fontSize="10" fill="#1F3864">(W)</text>
       </svg>
+
+      {/* מקרא — טקסט רגיל, לא בתוך השרטוט, כדי שלא ייחתך */}
+      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-[#414942]" dir="rtl" data-sketch-legend>
+        <Legend color={COLORS.post} square label={`${engineering.postCount} עמודים, גובה ${fmt(height)} מ'`} />
+        <Legend color={COLORS.support} thick label={`${engineering.supportCount} תומכי תשתית ${engineering.supportSection || ''}`} />
+        <Legend color={COLORS.base} label={`${engineering.baseBeamCount} קורות תשתית ${engineering.baseBeamSection || ''}`} />
+        <Legend color={COLORS.roof} label={`${engineering.roofBeamCount} קורות גג ${engineering.roofBeamSection || ''}`} />
+      </div>
+      <p className="mt-2 text-xs text-[#717971] text-right">
+        {lay.attachType === 'wall' ? 'צמודת קיר' : 'עצמאית'} | {fmt(L * W)} מ"ר{hasRoof ? ` | קירוי: ${roofNames[roofType]}` : ''}
+      </p>
     </div>
   )
+}
+
+function Legend({ color, label, square, thick }) {
+  return (
+    <div className="flex items-center gap-2">
+      {square
+        ? <span className="inline-block w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color }} />
+        : <span className="inline-block w-5 shrink-0 rounded" style={{ background: color, height: thick ? 5 : 3 }} />}
+      <span>{label}</span>
+    </div>
+  )
+}
+
+function fmt(n) {
+  return (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('he-IL', { maximumFractionDigits: 2 })
 }

@@ -355,7 +355,7 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
   const hasDimensions = mat.piece_length !== undefined && mat.piece_length > 0
   // שם דינמי — אם יש מידות, מציג אותן
   const displayName = mat.width && mat.height && mat.width > 0 && mat.height > 0
-    ? `${mat.name.replace(/\d+[xX×]\d+/g, '')} ${mat.width}x${mat.height}`.trim()
+    ? `${mat.name.replace(/\d+[xX×]\d+/g, '')} ${r2(mat.width)}x${r2(mat.height)}`.trim()
     : mat.name
 
   return (
@@ -384,7 +384,7 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
       <div className="grid grid-cols-3 gap-2">
         <div>
           <label className="text-[10px] text-[#717971]">מחיר</label>
-          <input type="number" step="0.01" value={mat.price_per_unit} onChange={e => updateMaterial(mat.id, 'price_per_unit', Number(e.target.value))}
+          <input type="number" step="0.01" value={r2(mat.price_per_unit)} onChange={e => updateMaterial(mat.id, 'price_per_unit', Number(e.target.value))}
             className="w-full h-9 px-2 border border-[#c1c9c0] rounded-lg text-sm bg-[#fdce6c]/10 focus:border-[#2d5a3d] outline-none font-bold" />
         </div>
         <div>
@@ -403,17 +403,17 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
         <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="text-[10px] text-[#717971]">אורך יחידה (מ')</label>
-            <input type="number" step="0.1" value={mat.piece_length || ''} onChange={e => updateMaterial(mat.id, 'piece_length', Number(e.target.value))}
+            <input type="number" step="0.1" value={r2(mat.piece_length)} onChange={e => updateMaterial(mat.id, 'piece_length', Number(e.target.value))}
               className="w-full h-9 px-2 border border-[#c1c9c0] rounded-lg text-sm bg-[#fdce6c]/10 focus:border-[#2d5a3d] outline-none" />
           </div>
           <div>
             <label className="text-[10px] text-[#717971]">רוחב (ס"מ)</label>
-            <input type="number" step="0.1" value={mat.width || ''} onChange={e => updateMaterial(mat.id, 'width', Number(e.target.value))}
+            <input type="number" step="0.1" value={r2(mat.width)} onChange={e => updateMaterial(mat.id, 'width', Number(e.target.value))}
               className="w-full h-9 px-2 border border-[#c1c9c0] rounded-lg text-sm focus:border-[#2d5a3d] outline-none" />
           </div>
           <div>
             <label className="text-[10px] text-[#717971]">גובה (ס"מ)</label>
-            <input type="number" step="0.1" value={mat.height || ''} onChange={e => updateMaterial(mat.id, 'height', Number(e.target.value))}
+            <input type="number" step="0.1" value={r2(mat.height)} onChange={e => updateMaterial(mat.id, 'height', Number(e.target.value))}
               className="w-full h-9 px-2 border border-[#c1c9c0] rounded-lg text-sm focus:border-[#2d5a3d] outline-none" />
           </div>
         </div>
@@ -462,4 +462,10 @@ function ListEditor({ label, items, onChange }) {
       </div>
     </div>
   )
+}
+
+// עיגול לתצוגה — מספרים מהשרת מגיעים לפעמים כמו 22.09000015258789
+function r2(n) {
+  if (n === '' || n === null || n === undefined) return ''
+  return Math.round(Number(n) * 100) / 100
 }

@@ -259,7 +259,7 @@ export default function Onboarding() {
                       <div key={mat.id} className="bg-[#f3f4ef] rounded-xl p-3 mb-2">
                         <div className="flex items-center justify-between mb-2">
                           <div className="bg-[#fdce6c] px-3 py-1 rounded-lg">
-                            <input type="number" step="0.01" value={mat.price_per_unit}
+                            <input type="number" step="0.01" value={r2(mat.price_per_unit)}
                               onChange={e => updateMaterial(mat.id, 'price_per_unit', Number(e.target.value))}
                               className="w-14 h-6 bg-transparent text-sm font-bold text-[#7a5900] text-center outline-none" />
                             <span className="text-[10px] text-[#7a5900]">₪</span>
@@ -272,14 +272,14 @@ export default function Onboarding() {
                         {mat.piece_length !== undefined && mat.piece_length > 0 && (
                           <div className="flex items-center gap-3 justify-end">
                             <div className="flex items-center gap-1">
-                              <input type="number" step="0.1" value={mat.piece_length}
+                              <input type="number" step="0.1" value={r2(mat.piece_length)}
                                 onChange={e => updateMaterial(mat.id, 'piece_length', Number(e.target.value))}
                                 className="w-12 h-7 px-1 border border-[#c1c9c0] rounded-lg text-xs text-center bg-white focus:border-[#2d5a3d] outline-none" />
                               <span className="text-[10px] text-[#717971]">אורך (מ')</span>
                             </div>
                             {mat.width > 0 && (
                               <div className="flex items-center gap-1">
-                                <input type="number" step="0.1" value={mat.width}
+                                <input type="number" step="0.1" value={r2(mat.width)}
                                   onChange={e => updateMaterial(mat.id, 'width', Number(e.target.value))}
                                   className="w-10 h-7 px-1 border border-[#c1c9c0] rounded-lg text-xs text-center bg-white focus:border-[#2d5a3d] outline-none" />
                                 <span className="text-[10px] text-[#717971]">רוחב (ס"מ)</span>
@@ -356,4 +356,10 @@ export default function Onboarding() {
       </div>
     </div>
   )
+}
+
+// עיגול לתצוגה — מספרים מהשרת מגיעים לפעמים כמו 22.09000015258789
+function r2(n) {
+  if (n === '' || n === null || n === undefined) return ''
+  return Math.round(Number(n) * 100) / 100
 }

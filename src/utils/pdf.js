@@ -7,7 +7,7 @@ import html2pdf from 'html2pdf.js'
 import { filterIncluded } from './quoteText'
 
 function fmt(n) {
-  return Number(n || 0).toLocaleString('he-IL')
+  return Number(n || 0).toLocaleString('he-IL', { maximumFractionDigits: 2 })
 }
 
 /**
@@ -165,26 +165,29 @@ export function buildMaterialsHtml(result, profile) {
   const dateStr = new Date().toLocaleDateString('he-IL')
 
   const rows = result.lineItems.map(item => `
-    <tr>
+    <tr style="page-break-inside:avoid;">
       <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-weight:500;">${item.name}</td>
-      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;">${item.quantity} ${item.unit || ''}</td>
-      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;color:#666;font-size:12px;">${item.detail || ''}</td>
-      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:left;font-weight:600;">${fmt(item.cost)} &#8362;</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;">${fmt(item.quantity)} ${item.unit || ''}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;color:#666;font-size:12px;">${item.detail || ''}
+        ${item.cutPlan?.length ? `<div style="margin-top:6px;padding:6px 8px;background:#f0faf0;border-radius:6px;color:#2d5a3d;font-size:11px;line-height:1.6;"><strong>תוכנית חיתוך:</strong><br>${item.cutPlan.join('<br>')}</div>` : ''}
+      </td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:left;font-weight:600;white-space:nowrap;">${fmt(item.cost)} &#8362;</td>
     </tr>
   `).join('')
 
-  // הנדסה
-  let engNote = ''
-  if (result.engineering) {
-    const eng = result.engineering
-    engNote = `<div style="background:#f0f4ff;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1F3864;">
-      <strong>חתכים הנדסיים:</strong>
-      תומך תשתית ${eng.supportSection || '—'} |
-      קורת תשתית ${eng.baseBeamSection || '—'} |
-      קורות גג ${eng.roofBeamSection || '—'} |
-      ${eng.postCount || '—'} עמודים
-    </div>`
-  }
+  // חתכים הנדסיים — רק מה שבאמת חושב (בלי "—")
+  const eng = result.engineering || {}
+  const engParts = [
+    eng.supportSection && `${eng.supportCount || ''} תומכי תשתית ${eng.supportSection}`,
+    eng.baseBeamSection && `${eng.baseBeamCount || ''} קורות תשתית ${eng.baseBeamSection}`,
+    eng.roofBeamSection && `${eng.roofBeamCount || ''} קורות גג ${eng.roofBeamSection}`,
+    eng.postCount && `${eng.postCount} עמודים`,
+    result.type === 'deck' && eng.joistCount && `${eng.joistCount} קורות תשתית באורך ${fmt(eng.joistLength)} מ'`,
+    result.type === 'deck' && eng.boardRows && `${eng.boardRows} שורות קרשים × ${eng.boardsPerRow}`,
+  ].filter(Boolean)
+  const engNote = engParts.length ? `<div style="background:#f0f4ff;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1F3864;">
+      <strong>${result.type === 'deck' ? 'מבנה:' : 'חתכים הנדסיים:'}</strong> ${engParts.join(' | ')}
+    </div>` : ''
 
   const html = `
     <div style="direction:rtl;font-family:'Segoe UI',Arial,sans-serif;color:#1a1c19;padding:20px;max-width:700px;">
@@ -249,18 +252,39 @@ export function mountPdfContainer(html) {
   return { container, root }
 }
 
+let pdfBusy = false
+
 async function downloadPDF(html, filename) {
+  // לחיצה כפולה בזמן הפקה — מתעלמים, כדי שלא ייווצרו שתי הורדות במקביל
+  if (pdfBusy) return
+  pdfBusy = true
   const { container, root } = mountPdfContainer(html)
   try {
     // מחכים לפונטים, אחרת העברית עלולה לצאת בפונט ברירת מחדל
     if (document.fonts?.ready) await document.fonts.ready
-    // הערה: הספרייה יוצרת לרגע מסגרת נסתרת ריקה (about:blank) כדי לצייר את המסמך, ומוחקת אותה בסוף.
-    // המשתמש לא רואה אותה — אבל כלי בדיקה אוטומטיים מזהים אותה כ"דף" נוסף.
-    await html2pdf().set(buildPdfOptions(filename)).from(root).save()
+    // הערה: הספרייה יוצרת לרגע מסגרת נסתרת ריקה (about:blank) בתוך הדף כדי לצייר את המסמך, ומוחקת אותה בסוף.
+    // זו לא לשונית — המשתמש לא רואה אותה.
+    const blob = await html2pdf().set(buildPdfOptions(filename)).from(root).outputPdf('blob')
+    saveBlob(blob, filename)
   } catch (err) {
     console.error('PDF failed', err)
     alert('לא הצלחנו להפיק PDF. נסו שוב, או מדפדפן אחר.')
   } finally {
     container.remove()
+    pdfBusy = false
   }
+}
+
+// הורדה דרך קישור הורדה אחד, באותה לשונית — בלי לפתוח חלון חדש (גם בנייד)
+export function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.rel = 'noopener'
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 60000)
 }

@@ -1,7 +1,7 @@
 /**
  * שרטוט דק — מבט מלמעלה + חתך צד, גדול וברור
  */
-export default function DeckSketch({ width, length, direction, woodType, height, stairs, joistCount }) {
+export default function DeckSketch({ width, length, direction, woodType, height, stairs, joistCount, boardRows, boardPieces, joistPieces }) {
   if (!width || !length) return null
 
   // === פרופורציות נכונות ===
@@ -29,22 +29,28 @@ export default function DeckSketch({ width, length, direction, woodType, height,
   const stairCount = stairs || 0
   const stairZone = stairCount > 0 ? stairCount * 12 + 20 : 0
   const sideH = 100
-  const totalH = padTop + dl + 30 + sideH + 40 + stairZone
+  const totalH = padTop + dl + 30 + sideH + 12 + stairZone
 
   const svgW = maxW + padX * 2
   const svgH = totalH
 
-  // קרשים
+  // קרשים — כל שורה מצוירת כחתיכות לפי תוכנית החיתוך של המנוע (אותו מספר כמו בטבלה)
   const isHoriz = direction === 'horizontal'
-  const boardSpacing = isHoriz ? dl / Math.min(Math.ceil(length / 0.15), 25) : dw / Math.min(Math.ceil(width / 0.15), 25)
-  const boardLines = []
-  const bCount = isHoriz ? Math.min(Math.ceil(length / 0.15), 25) : Math.min(Math.ceil(width / 0.15), 25)
-  for (let i = 0; i <= bCount; i++) {
-    const t = bCount > 0 ? i / bCount : 0
-    if (isHoriz) {
-      boardLines.push({ x1: ox + 1, y1: oy + dl * t, x2: ox + dw - 1, y2: oy + dl * t })
-    } else {
-      boardLines.push({ x1: ox + dw * t, y1: oy + 1, x2: ox + dw * t, y2: oy + dl - 1 })
+  const rows = Math.min(boardRows || 0, 150)
+  const pieces = boardPieces?.length ? boardPieces : [isHoriz ? width : length]
+  const runTotal = pieces.reduce((s, p) => s + p, 0) || 1
+  const boardRects = []
+  for (let r = 0; r < rows; r++) {
+    let pos = 0
+    for (const p of pieces) {
+      const a = pos / runTotal, b = (pos + p) / runTotal
+      if (isHoriz) {
+        // קרשים לרוחב — כל שורה רצה לאורך ציר x
+        boardRects.push({ x: ox + dw * a, y: oy + dl * r / rows, w: dw * (b - a), h: dl / rows })
+      } else {
+        boardRects.push({ x: ox + dw * r / rows, y: oy + dl * a, w: dw / rows, h: dl * (b - a) })
+      }
+      pos += p
     }
   }
 
@@ -57,6 +63,20 @@ export default function DeckSketch({ width, length, direction, woodType, height,
       joistLines.push({ x1: ox + dw * t, y1: oy - 5, x2: ox + dw * t, y2: oy + dl + 5 })
     } else {
       joistLines.push({ x1: ox - 5, y1: oy + dl * t, x2: ox + dw + 5, y2: oy + dl * t })
+    }
+  }
+
+  // נקודות חיבור בקורות התשתית (כשהקורה ארוכה מהמלאי)
+  const jointMarks = []
+  if (joistPieces?.length > 1) {
+    const jTotal = joistPieces.reduce((s, p) => s + p, 0)
+    let acc = 0
+    for (const p of joistPieces.slice(0, -1)) {
+      acc += p
+      const t = acc / jTotal
+      joistLines.forEach(j => jointMarks.push(isHoriz
+        ? { x: j.x1, y: oy + dl * t }
+        : { x: ox + dw * t, y: j.y1 }))
     }
   }
 
@@ -89,10 +109,15 @@ export default function DeckSketch({ width, length, direction, woodType, height,
         <rect x={ox} y={oy} width={dw} height={dl}
           fill="rgba(196,163,90,0.12)" stroke="#5C3317" strokeWidth="2.5" rx="3" />
 
-        {/* קרשים */}
-        {boardLines.map((b, i) => (
-          <line key={`b${i}`} x1={b.x1} y1={b.y1} x2={b.x2} y2={b.y2}
-            stroke="#A0522D" strokeWidth="1.2" opacity="0.35" />
+        {/* קרשים — מלבן לכל לוח */}
+        {boardRects.map((b, i) => (
+          <rect key={`b${i}`} data-board="1" x={b.x} y={b.y} width={b.w} height={b.h}
+            fill="none" stroke="#A0522D" strokeWidth="0.8" opacity="0.45" />
+        ))}
+
+        {/* חיבורים על קורות התשתית */}
+        {jointMarks.map((m, i) => (
+          <circle key={`jm${i}`} cx={m.x} cy={m.y} r="2.5" fill="#C45D3E" />
         ))}
 
         {/* כיוון חץ */}
@@ -110,7 +135,7 @@ export default function DeckSketch({ width, length, direction, woodType, height,
         <line x1={ox + dw + 14} y1={oy} x2={ox + dw + 14} y2={oy + dl} stroke="#1F3864" strokeWidth="1.5" />
         <line x1={ox + dw + 8} y1={oy} x2={ox + dw + 20} y2={oy} stroke="#1F3864" strokeWidth="1" />
         <line x1={ox + dw + 8} y1={oy + dl} x2={ox + dw + 20} y2={oy + dl} stroke="#1F3864" strokeWidth="1" />
-        <text x={ox + dw + 28} y={oy + dl / 2 + 5} textAnchor="start" fontSize="14" fill="#1F3864" fontWeight="bold">{length} מ'</text>
+        <text x={ox + dw + 28} y={oy + dl / 2 + 5} textAnchor="end" fontSize="14" fill="#1F3864" fontWeight="bold">{length} מ'</text>
 
         {/* מדרגות — מחוברות לדק */}
         {stairCount > 0 && (
@@ -168,13 +193,13 @@ export default function DeckSketch({ width, length, direction, woodType, height,
           {heightLabels[height] || ''}
         </text>
 
-        {/* מקרא */}
-        <rect x={padX} y={svgH - 28} width={svgW - padX * 2} height={22} fill="white" rx="4" stroke="#eee" />
-        <text x={svgW / 2} y={svgH - 13} textAnchor="middle" fontSize="11" fill="#444">
-          {woodNames[woodType] || 'אורן'} | {jCount} קורות תשתית | {Math.round(width * length)} מ"ר
-          {stairCount > 0 ? ` | ${stairCount} מדרגות` : ''}
-        </text>
       </svg>
+      {/* מקרא — טקסט רגיל מתחת לשרטוט, כדי שלא ייחתך */}
+      <div className="mt-3 text-xs text-[#414942] text-center leading-relaxed" data-sketch-legend>
+        {woodNames[woodType] || 'אורן'} | {rows} שורות × {pieces.length} = {boardRects.length} לוחות | {jCount} קורות תשתית | {Math.round(width * length * 100) / 100} מ"ר
+        {stairCount > 0 ? ` | ${stairCount} מדרגות` : ''}
+        {jointMarks.length > 0 && <span className="block text-[#C45D3E]">נקודה כתומה = חיבור קורת תשתית על רגל</span>}
+      </div>
     </div>
   )
 }
