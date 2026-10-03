@@ -96,7 +96,7 @@ export function generateQuotePDF(result, clientInfo, profile, branding) {
         <div style="padding:20px;text-align:center;background:#2d5a3d08;">
           <div style="display:flex;justify-content:center;gap:40px;margin-bottom:16px;">
             <div><div style="font-size:11px;color:#888;">שטח</div><div style="font-size:18px;font-weight:700;">${fmt(result.area)} מ"ר</div></div>
-            <div><div style="font-size:11px;color:#888;">מחיר/מ"ר</div><div style="font-size:18px;font-weight:700;">${fmt(result.totals.pricePerSqm)} &#8362;</div></div>
+            <div><div style="font-size:11px;color:#888;">מחיר/מ"ר לפני מע"מ</div><div style="font-size:18px;font-weight:700;">${fmt(result.totals.pricePerSqm)} &#8362;</div></div>
             <div><div style="font-size:11px;color:#888;">ימי עבודה</div><div style="font-size:18px;font-weight:700;">${result.labor?.days || ''}</div></div>
           </div>
           <div style="border-top:1px solid #2d5a3d20;padding-top:14px;">

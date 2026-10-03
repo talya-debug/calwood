@@ -351,11 +351,11 @@ export default function NewQuote() {
                 {/* מחיר ראשי */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="text-left">
-                    <div className="text-xs text-[#717971]">מחיר למ"ר</div>
+                    <div className="text-xs text-[#717971]">מחיר למ"ר <span className="font-bold">לפני מע"מ</span></div>
                     <div className="text-lg font-bold text-[#414942]">{fmt(result.totals.pricePerSqm)}₪</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-[#717971]">סה"כ לתשלום</div>
+                    <div className="text-xs text-[#717971]">סה"כ לתשלום <span className="font-bold">כולל מע"מ</span></div>
                     <div className="text-4xl font-extrabold text-[#C45D3E]">{fmt(result.totals.total)}₪</div>
                   </div>
                 </div>
@@ -372,26 +372,44 @@ export default function NewQuote() {
                 {expandedSections.mat && (
                   <div className="space-y-1.5 pr-3 pb-3">
                     {result.lineItems.map((item, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span className="text-[#1a1c1a]">{fmt(item.cost)}₪</span>
-                        <span className="text-[#717971]">{item.name}</span>
+                      <div key={i} className="flex justify-between gap-3 text-sm">
+                        <span className="text-[#1a1c1a] shrink-0">{fmt(item.cost)}₪</span>
+                        <span className="text-[#717971] text-right">
+                          {item.name}{item.unit ? ` — ${item.quantity} ${item.unit}` : ''}
+                          {item.detail && <span className="block text-[11px]">{item.detail}</span>}
+                        </span>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* עבודה + שינוע */}
-                <div className="flex justify-between py-3 border-t border-[#edeeea] text-sm">
-                  <span className="font-bold">{fmt(result.totals.labor + (result.travel || 0) + (result.accessCost || 0) + (result.heightCost || 0))}₪</span>
-                  <span className="text-[#414942]">עבודה + שינוע</span>
-                </div>
-
-                {/* סיכום */}
-                <div className="bg-[#bceec8]/20 rounded-xl p-4 mt-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>לפני מע"מ: {fmt(result.totals.beforeVat)}₪</span>
-                    <span>כולל מע"מ (18%)</span>
+                {/* איך הגענו למחיר — לקבלן בלבד, לא מופיע בהצעה ללקוח */}
+                <button onClick={() => setExpandedSections(p => ({ ...p, how: !p.how }))}
+                  className="w-full flex items-center justify-between py-3 border-t border-[#edeeea]">
+                  {expandedSections.how ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  <span className="text-sm font-bold text-[#2d5a3d]">איך הגענו למחיר?</span>
+                </button>
+                {expandedSections.how && result.breakdown && (
+                  <div className="bg-[#f3f4ef] rounded-xl p-3 mb-2 space-y-1 text-sm">
+                    {result.breakdown.map((row, i) => (
+                      <div key={i} className={`flex justify-between gap-3 ${row.kind === 'item' ? 'py-0.5' : 'py-1.5 border-t border-[#c1c9c0] font-bold'}
+                        ${row.kind === 'total' ? 'text-[#C45D3E] text-base' : ''}`}>
+                        <span className="shrink-0">{fmt(row.amount)}₪</span>
+                        <span className="text-right">
+                          {row.label}
+                          {row.note && <span className="block text-[11px] font-normal text-[#717971]">{row.note}</span>}
+                        </span>
+                      </div>
+                    ))}
+                    <p className="text-[11px] text-[#717971] pt-2">הפירוט הזה לשימושך בלבד ולא מופיע בהצעה ללקוח.</p>
                   </div>
+                )}
+
+                {/* סיכום מע"מ */}
+                <div className="bg-[#bceec8]/20 rounded-xl p-4 mt-2 text-sm space-y-1">
+                  <div className="flex justify-between"><span>{fmt(result.totals.beforeVat)}₪</span><span>מחיר לפני מע"מ</span></div>
+                  <div className="flex justify-between text-[#717971]"><span>{fmt(result.totals.vat)}₪</span><span>מע"מ (18%)</span></div>
+                  <div className="flex justify-between font-bold border-t border-[#2d5a3d]/20 pt-1"><span>{fmt(result.totals.total)}₪</span><span>סה"כ כולל מע"מ</span></div>
                 </div>
               </div>
 

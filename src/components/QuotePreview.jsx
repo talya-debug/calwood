@@ -110,7 +110,7 @@ export default function QuotePreview({ result, client, profile, branding, onClos
             <div className="p-3 bg-[#2d5a3d]/5 flex justify-around text-center">
               <div><div className="text-[10px] text-[#717971]">שטח</div><div className="text-base font-bold">{fmt(result.area)} מ"ר</div></div>
               <div className="border-r border-[#e7e9e4]"></div>
-              <div><div className="text-[10px] text-[#717971]">₪/מ"ר</div><div className="text-base font-bold">{fmt(result.totals.pricePerSqm)}</div></div>
+              <div><div className="text-[10px] text-[#717971]">₪/מ"ר לפני מע"מ</div><div className="text-base font-bold">{fmt(result.totals.pricePerSqm)}</div></div>
               <div className="border-r border-[#e7e9e4]"></div>
               <div><div className="text-[10px] text-[#717971]">ימי עבודה</div><div className="text-base font-bold">{result.labor?.days}</div></div>
             </div>
