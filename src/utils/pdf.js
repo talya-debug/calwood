@@ -15,6 +15,11 @@ function fmt(n) {
  * תיאור פרויקט + מה כלול + מחיר סופי
  */
 export function generateQuotePDF(result, clientInfo, profile, branding) {
+  const { html, filename } = buildQuoteHtml(result, clientInfo, profile, branding)
+  return downloadPDF(html, filename)
+}
+
+export function buildQuoteHtml(result, clientInfo, profile, branding) {
   const typeNames = { pergola: 'פרגולה', deck: 'דק', custom: 'עבודה מותאמת' }
   const typeName = typeNames[result.type] || result.type
   const dims = result.dimensions || {}
@@ -72,7 +77,7 @@ export function generateQuotePDF(result, clientInfo, profile, branding) {
 
       <!-- כותרת הצעה -->
       <div style="text-align:center;margin-bottom:24px;">
-        <div style="font-size:28px;font-weight:800;color:#2d5a3d;letter-spacing:1px;">${branding.quote_title || 'הצעת מחיר'}</div>
+        <div style="font-size:28px;font-weight:800;color:#2d5a3d;">${branding.quote_title || 'הצעת מחיר'}</div>
       </div>
 
       <!-- פנייה ללקוח -->
@@ -141,13 +146,18 @@ export function generateQuotePDF(result, clientInfo, profile, branding) {
     </div>
   `
 
-  downloadPDF(html, `הצעת_מחיר_${typeName}_${dims.width || ''}x${dims.length || ''}.pdf`)
+  return { html, filename: `הצעת_מחיר_${typeName}_${dims.width || ''}x${dims.length || ''}.pdf` }
 }
 
 /**
  * כתב כמויות — לקבלן (פירוט מלא)
  */
 export function generateMaterialsPDF(result, profile) {
+  const { html, filename } = buildMaterialsHtml(result, profile)
+  return downloadPDF(html, filename)
+}
+
+export function buildMaterialsHtml(result, profile) {
   const typeNames = { pergola: 'פרגולה', deck: 'דק', custom: 'עבודה מותאמת' }
   const typeName = typeNames[result.type] || result.type
   const dims = result.dimensions || {}
@@ -207,22 +217,50 @@ export function generateMaterialsPDF(result, profile) {
     </div>
   `
 
-  downloadPDF(html, `כתב_כמויות_${typeName}_${dims.width || ''}x${dims.length || ''}.pdf`)
+  return { html, filename: `כתב_כמויות_${typeName}_${dims.width || ''}x${dims.length || ''}.pdf` }
 }
 
 // === עזר — הורדת PDF ===
-function downloadPDF(html, filename) {
-  const container = document.createElement('div')
-  container.innerHTML = html
-  document.body.appendChild(container)
+// רוחב קבוע (בערך רוחב A4) — כדי שבנייד המסמך לא יתכווץ לרוחב המסך וייחתך
+const PDF_RENDER_WIDTH = 720
 
-  html2pdf().set({
-    margin: 10,
+export function buildPdfOptions(filename) {
+  return {
+    margin: [10, 10, 12, 10],
     filename,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(container.firstElementChild).save().then(() => {
-    document.body.removeChild(container)
-  })
+    html2canvas: { scale: 2, useCORS: true, windowWidth: PDF_RENDER_WIDTH, scrollX: 0, scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    // לא חותכים בלוק באמצע בין עמודים
+    pagebreak: { mode: ['avoid-all', 'css'] },
+  }
+}
+
+// מכין את המסמך מחוץ למסך, ברוחב קבוע
+export function mountPdfContainer(html) {
+  const container = document.createElement('div')
+  container.style.cssText = `position:fixed;top:0;left:-10000px;width:${PDF_RENDER_WIDTH}px;background:#fff;`
+  container.innerHTML = html
+  const root = container.firstElementChild
+  root.style.maxWidth = 'none'
+  root.style.width = `${PDF_RENDER_WIDTH}px`
+  root.style.boxSizing = 'border-box'
+  document.body.appendChild(container)
+  return { container, root }
+}
+
+async function downloadPDF(html, filename) {
+  const { container, root } = mountPdfContainer(html)
+  try {
+    // מחכים לפונטים, אחרת העברית עלולה לצאת בפונט ברירת מחדל
+    if (document.fonts?.ready) await document.fonts.ready
+    // הערה: הספרייה יוצרת לרגע מסגרת נסתרת ריקה (about:blank) כדי לצייר את המסמך, ומוחקת אותה בסוף.
+    // המשתמש לא רואה אותה — אבל כלי בדיקה אוטומטיים מזהים אותה כ"דף" נוסף.
+    await html2pdf().set(buildPdfOptions(filename)).from(root).save()
+  } catch (err) {
+    console.error('PDF failed', err)
+    alert('לא הצלחנו להפיק PDF. נסו שוב, או מדפדפן אחר.')
+  } finally {
+    container.remove()
+  }
 }

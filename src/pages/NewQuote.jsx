@@ -128,7 +128,11 @@ export default function NewQuote() {
           <div className="space-y-3">
             {[{ v: 'pergola', l: 'פרגולה', d: 'תכנון פרגולות עץ מכל הסוגים', Icon: PergolaIcon },
               { v: 'deck', l: 'דק', d: 'חישוב דקים, תשתיות וחיפויים', Icon: DeckIcon }].map(o => (
-              <button key={o.v} onClick={() => { setWorkType(o.v); setStep(2) }}
+              <button key={o.v} onClick={() => {
+                // גובה ברירת מחדל לפי סוג עבודה — בדק הערך '3' (של פרגולה) לא תואם אף אפשרות, ולכן בטון לא חושב
+                if (o.v !== workType) setDim('height', o.v === 'deck' ? 'low' : '3')
+                setWorkType(o.v); setStep(2)
+              }}
                 className={`w-full p-5 rounded-2xl border-2 flex items-center gap-5 transition-all
                   ${workType === o.v ? 'border-[#2d5a3d] bg-[#bceec8]/15' : 'border-[#e7e9e4] bg-white hover:border-[#c1c9c0]'}`}>
                 <o.Icon active={workType === o.v} />

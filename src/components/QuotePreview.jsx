@@ -5,6 +5,14 @@ import { filterIncluded } from '../utils/quoteText'
 
 function fmt(n) { return Number(n || 0).toLocaleString('he-IL') }
 
+// שדה שניתן לעריכה — מוגדר מחוץ לקומפוננטה, אחרת השדה נבנה מחדש בכל הקשה ומאבד את הסמן
+function E({ editing, value, onChange, multi, className = '' }) {
+  if (!editing) return multi ? <div className={`whitespace-pre-line ${className}`}>{value}</div> : <span className={className}>{value}</span>
+  return multi
+    ? <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className={`w-full border border-dashed border-[#2d5a3d]/30 rounded-lg px-3 py-2 outline-none resize-none ${className}`} />
+    : <input value={value} onChange={e => onChange(e.target.value)} className={`w-full border-b border-dashed border-[#2d5a3d]/30 outline-none ${className}`} />
+}
+
 export default function QuotePreview({ result, client, profile, branding, onClose }) {
   const dims = result.dimensions || {}
   const woodNames = { pine: 'אורן', bamboo_d: 'במבוק כהה', bamboo_l: 'במבוק בהיר', ipe: 'איפאה', ipe_prem: 'איפאה פרמיום', cumaru: 'קומרו', sucupira: 'סוקופירה' }
@@ -50,13 +58,6 @@ export default function QuotePreview({ result, client, profile, branding, onClos
     generateQuotePDF(cr, client, profile, cb)
   }
 
-  const E = ({ value, onChange, multi, className = '' }) => {
-    if (!editing) return multi ? <div className={`whitespace-pre-line ${className}`}>{value}</div> : <span className={className}>{value}</span>
-    return multi
-      ? <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className={`w-full border border-dashed border-[#2d5a3d]/30 rounded-lg px-3 py-2 outline-none resize-none ${className}`} />
-      : <input value={value} onChange={e => onChange(e.target.value)} className={`w-full border-b border-dashed border-[#2d5a3d]/30 outline-none ${className}`} />
-  }
-
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto py-3 px-2">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden">
@@ -87,23 +88,23 @@ export default function QuotePreview({ result, client, profile, branding, onClos
 
           {/* כותרת */}
           <div className="text-center">
-            <E value={title} onChange={setTitle} className="text-2xl font-extrabold text-[#2d5a3d]" />
+            <E editing={editing} value={title} onChange={setTitle} className="text-2xl font-extrabold text-[#2d5a3d]" />
           </div>
 
           {/* פנייה */}
           <div className="bg-[#f3f4ef] rounded-xl p-3">
-            <E value={greeting} onChange={setGreeting} multi className="text-[#414942] text-xs leading-relaxed" />
+            <E editing={editing} value={greeting} onChange={setGreeting} multi className="text-[#414942] text-xs leading-relaxed" />
           </div>
 
           {/* תיאור */}
           <div>
             <div className="text-xs font-bold text-[#2d5a3d] mb-1 border-b border-[#2d5a3d] pb-1">תיאור העבודה</div>
             <div className="border rounded-lg p-3">
-              <E value={workDesc} onChange={setWorkDesc} multi className="text-[#414942] text-xs leading-loose" />
+              <E editing={editing} value={workDesc} onChange={setWorkDesc} multi className="text-[#414942] text-xs leading-loose" />
             </div>
           </div>
 
-          {editing && <E value={notes} onChange={setNotes} multi className="text-xs text-[#717971]" />}
+          {editing && <E editing={editing} value={notes} onChange={setNotes} multi className="text-xs text-[#717971]" />}
           {!editing && notes && <div className="text-xs text-[#717971] bg-[#f3f4ef] rounded-lg p-2">{notes}</div>}
 
           {/* מחיר — קומפקטי */}
@@ -126,7 +127,7 @@ export default function QuotePreview({ result, client, profile, branding, onClos
           </div>
 
           {/* לו"ז */}
-          <div className="text-xs"><strong className="text-[#414942]">לוח זמנים: </strong><E value={timeline} onChange={setTimeline} className="text-[#717971] text-xs" /></div>
+          <div className="text-xs"><strong className="text-[#414942]">לוח זמנים: </strong><E editing={editing} value={timeline} onChange={setTimeline} className="text-[#717971] text-xs" /></div>
 
           {/* כלול / לא כלול */}
           <div className="grid grid-cols-2 gap-3">
@@ -145,9 +146,9 @@ export default function QuotePreview({ result, client, profile, branding, onClos
           {/* תנאים */}
           <div className="border-t border-[#edeeea] pt-3 space-y-1 text-[11px] text-[#717971]">
             {/* מוצג רק מה שהקבלן הגדיר. במצב עריכה אפשר למלא */}
-            {(editing || paymentTerms) && <div><strong className="text-[#414942]">תשלום: </strong><E value={paymentTerms} onChange={setPaymentTerms} className="text-[11px]" /></div>}
-            {(editing || warranty) && <div><strong className="text-[#414942]">אחריות: </strong><E value={warranty} onChange={setWarranty} className="text-[11px]" /></div>}
-            {(editing || validity) && <div>{editing && <strong className="text-[#414942]">תוקף: </strong>}<E value={validity} onChange={setValidity} className="text-[11px]" /></div>}
+            {(editing || paymentTerms) && <div><strong className="text-[#414942]">תשלום: </strong><E editing={editing} value={paymentTerms} onChange={setPaymentTerms} className="text-[11px]" /></div>}
+            {(editing || warranty) && <div><strong className="text-[#414942]">אחריות: </strong><E editing={editing} value={warranty} onChange={setWarranty} className="text-[11px]" /></div>}
+            {(editing || validity) && <div>{editing && <strong className="text-[#414942]">תוקף: </strong>}<E editing={editing} value={validity} onChange={setValidity} className="text-[11px]" /></div>}
             {!editing && !paymentTerms && !warranty && !validity && (
               <div className="bg-[#fdce6c]/20 text-[#7a5900] rounded-lg p-2">
                 לא הוגדרו תנאי תשלום, אחריות ותוקף, ולכן הם לא יופיעו בהצעה. אפשר להוסיף כאן ב"ערוך" או בהגדרות. (ההערה הזו לא מופיעה ב-PDF)
@@ -157,7 +158,7 @@ export default function QuotePreview({ result, client, profile, branding, onClos
 
           {/* חתימה */}
           <div className="pt-2">
-            <E value={closing} onChange={setClosing} multi className="text-xs text-[#414942]" />
+            <E editing={editing} value={closing} onChange={setClosing} multi className="text-xs text-[#414942]" />
           </div>
         </div>
       </div>

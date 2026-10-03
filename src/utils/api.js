@@ -131,14 +131,17 @@ export async function removeClient(id) {
 }
 
 // === הצעות ===
+// בשרת הלקוח נשמר ב-client_info — מנרמלים ל-client כמו בשאר האפליקציה
+const normalizeQuote = (q) => ({ ...q, client: q.client || q.client_info || null })
+
 export async function fetchQuotes() {
   try {
-    // בשרת הלקוח נשמר ב-client_info — מנרמלים ל-client כמו בשאר האפליקציה
-    const quotes = (await apiFetch('quotes')).map(q => ({ ...q, client: q.client || q.client_info || null }))
+    const quotes = (await apiFetch('quotes')).map(normalizeQuote)
     cacheSet('quotes', quotes)
     return quotes
   } catch {
-    return cacheGet('quotes') || []
+    // גם בגיבוי המקומי (כשאין חיבור לשרת) — אותו נרמול
+    return (cacheGet('quotes') || []).map(normalizeQuote)
   }
 }
 
