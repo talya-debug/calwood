@@ -2,6 +2,11 @@
  * מנוע חישוב דק — נוסחאות 1:1 מאקסל + מחירים ומידות מהמחירון של הקבלן
  */
 import { getMaterials } from '../utils/storage'
+import { cutPlan } from './stock'
+import { buildBreakdown } from './breakdown'
+
+// מרווח רגליים לאורך קורת תשתית (מ') — גם האורך המינימלי לחתיכת השלמה, כדי שכל חיבור ייפול על רגל
+const LEG_SPACING = 1.15
 
 // ברירות מחדל — רק אם הקבלן לא שינה
 const DEFAULTS = {
@@ -33,6 +38,14 @@ function getPrice(materials, key) {
   if (!def) return 0
   const mat = materials.find(m => m.id === def.id && m.is_active)
   return mat ? Number(mat.price_per_unit) : def.price
+}
+
+// אורך יחידת מלאי מהמחירון (מ'). 0 = לא הוגדר
+function getStockLength(materials, key) {
+  const def = DEFAULTS[key]
+  if (!def) return 0
+  const mat = materials.find(m => m.id === def.id && m.is_active)
+  return Number(mat?.piece_length) || 0
 }
 
 // שולף מחיר + מידות של לוח דק מהמחירון
@@ -83,7 +96,7 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   if (supportBeam) {
     supportCount = Math.max(1, Math.ceil(DIM_BOARD / 1.5))
     supportLength = DIM_JOIST
-    supportLegs = Math.ceil(supportLength / 1.15) * supportCount
+    supportLegs = Math.ceil(supportLength / LEG_SPACING) * supportCount
   }
 
   // ריווח קורות תשתית — לפי עובי הקרש (בדיוק כמו באקסל)
@@ -91,14 +104,19 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   // עובי 2.5+ ס"מ (אורן 25מ"מ, איפאה 25מ"מ, קומרו 25מ"מ) = ריווח 60 ס"מ
   const JOIST_SPACING = wood.thickness <= 2 ? 0.40 : 0.60
 
-  const joistCount = Math.ceil(DIM_BOARD / JOIST_SPACING) + 1
-  const legsPerJoist = supportBeam ? 0 : Math.ceil(DIM_JOIST / 1.15) + 1
+  const joistCount = Math.ceil(DIM_BOARD / JOIST_SPACING - 1e-9) + 1
+  const legsPerJoist = supportBeam ? 0 : Math.ceil(DIM_JOIST / LEG_SPACING) + 1
   const totalLegs = supportBeam ? supportLegs : joistCount * legsPerJoist
 
-  // קרשים — מהמידות שהקבלן הגדיר במחירון
-  const boardRows = Math.ceil(DIM_JOIST / board.boardWidth)
-  const boardsPerRow = Math.ceil(DIM_BOARD / board.boardLength)
-  const totalBoards = boardRows * boardsPerRow
+  // קרשים — מהמידות שהקבלן הגדיר במחירון. כל שורה נקנית בנפרד (כמו באקסל)
+  const boardRows = Math.ceil(DIM_JOIST / board.boardWidth - 1e-9)
+  const boardsPlan = cutPlan({ runLength: DIM_BOARD, count: boardRows, stockLength: board.boardLength })
+  const totalBoards = boardsPlan.bars
+  const boardsPerRow = boardRows > 0 ? totalBoards / boardRows : 0
+
+  // קורות תשתית — לפי אורך היחידה במחירון. שאריות מנוצלות לחיבור על רגל
+  const joistPlan = cutPlan({ runLength: DIM_JOIST, count: joistCount,
+    stockLength: getStockLength(materials, 'joist'), reuseOffcuts: true, minPiece: LEG_SPACING })
 
   // בטון
   let concreteBags = 0
@@ -112,22 +130,27 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   const lineItems = []
 
   // קרשים = לוחות × אורך לוח × מחיר/מ'
-  const costBoards = Math.round(totalBoards * board.boardLength * woodPrice)
-  lineItems.push({ name: `קרשי דק ${wood.name}`, quantity: totalBoards, unit: 'לוחות',
-    detail: `${boardRows} שורות × ${boardsPerRow} לוחות של ${board.boardLength} מ'`, cost: costBoards })
+  const costBoards = Math.round(boardsPlan.purchasedM * woodPrice)
+  lineItems.push({ name: `קרשי דק ${wood.name}`, quantity: totalBoards, unit: `לוחות של ${board.boardLength} מ'`,
+    detail: `${boardRows} שורות × ${boardsPerRow} לוחות | פחת ${boardsPlan.wasteM} מ' (${boardsPlan.wastePct}%)`,
+    cost: costBoards, wasteCost: Math.round(boardsPlan.wasteM * woodPrice) })
 
-  // קורות תשתית דק
-  const costJoists = Math.round(joistCount * DIM_JOIST * ep_joist)
-  lineItems.push({ name: "קורות תשתית דק", quantity: joistCount, unit: "יח'",
-    detail: `${joistCount} × ${DIM_JOIST} מ' × ${ep_joist} ₪/מ'`, cost: costJoists })
+  // קורות תשתית דק — קונים יחידות מלאי שלמות
+  const costJoists = Math.round(joistPlan.purchasedM * ep_joist)
+  lineItems.push({ name: 'קורות תשתית דק', quantity: joistPlan.bars, unit: `יח' של ${joistPlan.stockLength} מ'`,
+    detail: `${joistCount} קורות באורך ${DIM_JOIST} מ' | פחת ${joistPlan.wasteM} מ' (${joistPlan.wastePct}%)`,
+    cost: costJoists, wasteCost: Math.round(joistPlan.wasteM * ep_joist) })
 
   // תומך
   let costSupport = 0
   if (supportBeam) {
     const supportPrice = supportType === '5x10' ? ep_joist : ep_beam
-    costSupport = Math.round(supportCount * supportLength * supportPrice)
-    lineItems.push({ name: 'תומך תשתית', quantity: supportCount, unit: "יח'",
-      detail: `${supportCount} × ${supportLength} מ'`, cost: costSupport })
+    const supportPlan = cutPlan({ runLength: supportLength, count: supportCount,
+      stockLength: getStockLength(materials, supportType === '5x10' ? 'joist' : 'beam'), reuseOffcuts: true, minPiece: LEG_SPACING })
+    costSupport = Math.round(supportPlan.purchasedM * supportPrice)
+    lineItems.push({ name: 'תומך תשתית', quantity: supportPlan.bars, unit: `יח' של ${supportPlan.stockLength} מ'`,
+      detail: `${supportCount} תומכים באורך ${supportLength} מ' | פחת ${supportPlan.wasteM} מ'`,
+      cost: costSupport, wasteCost: Math.round(supportPlan.wasteM * supportPrice) })
   }
 
   // תוספת גובה — רק על קרשים+קורות תשתית דק
@@ -206,20 +229,27 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   const totalPrice = priceBeforeVat + vat
   const pricePerSqm = area > 0 ? Math.round(priceBeforeVat / area) : 0
 
+  const totals = {
+    materials: lineItems.reduce((s, i) => s + i.cost, 0),
+    labor: costLaborOwner + costLaborHelper,
+    overhead: costOverhead,
+    totalCosts, beforeVat: priceBeforeVat, vat, total: totalPrice, pricePerSqm, margin: MARGIN,
+  }
+
   return {
     type: 'deck',
     dimensions: { width: W, length: L, height, woodType, direction, access, helperType, baseType, stairs, supportBeam },
     area,
-    engineering: { joistCount, totalLegs, totalBoards, boardRows, boardsPerRow, DIM_BOARD, DIM_JOIST },
+    // מקור אחד לשרטוט ולכתב הכמויות
+    engineering: { joistCount, joistLength: DIM_JOIST, joistSpacing: JOIST_SPACING, joistBars: joistPlan.bars,
+      totalLegs, totalBoards, boardRows, boardsPerRow, DIM_BOARD, DIM_JOIST },
+    includes: { concrete: concreteBags > 0, akerstein: akersteinCount > 0 },
     lineItems,
     labor: { days: workDays, owner: costLaborOwner, helper: costLaborHelper, total: costLaborOwner + costLaborHelper },
     travel: travelCost, accessCost: costAccess, heightCost: costHeight,
-    totals: {
-      materials: lineItems.reduce((s, i) => s + i.cost, 0),
-      labor: costLaborOwner + costLaborHelper,
-      overhead: costOverhead,
-      totalCosts, beforeVat: priceBeforeVat, vat, total: totalPrice, pricePerSqm, margin: MARGIN,
-    }
+    totals,
+    breakdown: buildBreakdown({ lineItems, totals, travel: travelCost, accessCost: costAccess,
+      heightCost: costHeight, safetyPct, profitPct, overheadPct: profile.overhead_pct ?? 5 }),
   }
 }
 

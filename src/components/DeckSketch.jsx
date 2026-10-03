@@ -48,10 +48,10 @@ export default function DeckSketch({ width, length, direction, woodType, height,
     }
   }
 
-  // קורות תשתית
-  const jCount = joistCount || Math.floor((isHoriz ? width : length) / 0.4) + 1
+  // קורות תשתית — המספר מגיע רק מהמנוע (אותו מספר כמו בכתב הכמויות)
+  const jCount = joistCount || 0
   const joistLines = []
-  for (let i = 0; i < Math.min(jCount, 20); i++) {
+  for (let i = 0; i < Math.min(jCount, 80); i++) {
     const t = jCount > 1 ? i / (jCount - 1) : 0.5
     if (isHoriz) {
       joistLines.push({ x1: ox + dw * t, y1: oy - 5, x2: ox + dw * t, y2: oy + dl + 5 })

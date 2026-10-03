@@ -2,6 +2,7 @@
  * מנוע חישוב פרגולה — נוסחאות 1:1 מאקסל + מחירים מהמחירון של הקבלן
  */
 import { getMaterials } from '../utils/storage'
+import { buildBreakdown } from './breakdown'
 
 // ברירות מחדל — משמשות רק אם הקבלן לא שינה במחירון
 const DEFAULTS = {
@@ -154,6 +155,13 @@ export function calculatePergola(dims, rules, materialsList, profile) {
   const totalPrice = priceBeforeVat + vat
   const pricePerSqm = area > 0 ? Math.round(priceBeforeVat / area) : 0
 
+  const totals = {
+    materials: lineItems.reduce((s, i) => s + i.cost, 0),
+    labor: costLaborOwner + costLaborHelper,
+    overhead: costOverhead,
+    totalCosts, beforeVat: priceBeforeVat, vat, total: totalPrice, pricePerSqm, margin: MARGIN,
+  }
+
   return {
     type: 'pergola',
     dimensions: { width: W, length: L, height, postSize, attachType, roofType, access, helperType },
@@ -162,11 +170,9 @@ export function calculatePergola(dims, rules, materialsList, profile) {
     lineItems,
     labor: { days: workDays, owner: costLaborOwner, helper: costLaborHelper, total: costLaborOwner + costLaborHelper },
     travel: travelCost, accessCost: costAccess,
-    totals: {
-      materials: lineItems.reduce((s, i) => s + i.cost, 0),
-      labor: costLaborOwner + costLaborHelper,
-      overhead: costOverhead,
-      totalCosts, beforeVat: priceBeforeVat, vat, total: totalPrice, pricePerSqm, margin: MARGIN,
-    }
+    includes: { concrete: concreteBags > 0 },
+    totals,
+    breakdown: buildBreakdown({ lineItems, totals, travel: travelCost, accessCost: costAccess,
+      safetyPct, profitPct, overheadPct: profile.overhead_pct ?? 5 }),
   }
 }

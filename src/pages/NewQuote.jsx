@@ -323,7 +323,8 @@ export default function NewQuote() {
           )}
           {result && workType === 'deck' && (
             <DeckSketch width={parseFloat(dims.width)} length={parseFloat(dims.length)}
-              direction={dims.direction} woodType={dims.woodType} height={dims.height} stairs={parseInt(dims.stairs) || 0} />
+              direction={dims.direction} woodType={dims.woodType} height={dims.height} stairs={parseInt(dims.stairs) || 0}
+              joistCount={result.engineering?.joistCount} />
           )}
 
           {/* תוצאות */}
