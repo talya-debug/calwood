@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Download, Edit3, Check } from 'lucide-react'
 import { generateQuotePDF } from '../utils/pdf'
+import { filterIncluded } from '../utils/quoteText'
 
 function fmt(n) { return Number(n || 0).toLocaleString('he-IL') }
 
@@ -15,12 +16,12 @@ export default function QuotePreview({ result, client, profile, branding, onClos
     if (result.type === 'pergola') {
       l.push(`בניית והתקנת פרגולת עץ ${dims.attachType === 'wall' ? 'צמודת קיר' : 'עצמאית'}`)
       l.push(`מידות: ${dims.length}x${dims.width} מ' (${fmt(result.area)} מ"ר) | גובה ${dims.height} מ'`)
-      l.push(`כולל: עמודים, קורות תשתית וגג, בסיסי בטון, ברגים, תושבות, שימון`)
+      l.push(`כולל: עמודים, קורות תשתית וגג${result.includes?.concrete === false ? '' : ', בסיסי בטון'}, ברגים, תושבות, שימון`)
       if (dims.roofType && dims.roofType !== 'none') l.push(`קירוי: ${roofNames[dims.roofType]}`)
     } else {
       l.push(`התקנת דק ${woodNames[dims.woodType] || 'עץ'}`)
       l.push(`מידות: ${dims.length}x${dims.width} מ' (${fmt(result.area)} מ"ר) | גובה: ${heightNames[dims.height] || ''}`)
-      l.push(`כולל: לוחות דק, קורות תשתית, ברגים, זפת, שימון`)
+      l.push(`כולל: לוחות דק, קורות תשתית${result.includes?.concrete ? ', בסיסי בטון' : ''}${result.includes?.akerstein ? ', אקרשטיין' : ''}, ברגים, זפת, שימון`)
       if (dims.stairs > 0) l.push(`${dims.stairs} מדרגות`)
     }
     return l.join('\n')
@@ -30,7 +31,7 @@ export default function QuotePreview({ result, client, profile, branding, onClos
   const [title, setTitle] = useState(branding.quote_title || 'הצעת מחיר')
   const [greeting, setGreeting] = useState(client?.name ? `שלום ${client.name},\nתודה רבה על פנייתך. שמחתי לבקר באתר ולהעריך את הפרויקט.\nלהלן הצעת המחיר המפורטת:` : 'להלן הצעת מחיר:')
   const [workDesc, setWorkDesc] = useState(buildDesc)
-  const [included, setIncluded] = useState((branding.included_list || []).join('\n'))
+  const [included, setIncluded] = useState(filterIncluded(branding.included_list, result).join('\n'))
   const [excluded, setExcluded] = useState((branding.excluded_list || []).join('\n'))
   const [paymentTerms, setPaymentTerms] = useState(branding.payment_terms || '')
   const [warranty, setWarranty] = useState(branding.warranty_text || '')

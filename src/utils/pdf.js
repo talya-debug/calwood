@@ -4,6 +4,7 @@
  * כתב כמויות = לקבלן (פירוט חומרים + עלויות)
  */
 import html2pdf from 'html2pdf.js'
+import { filterIncluded } from './quoteText'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('he-IL')
@@ -42,8 +43,9 @@ export function generateQuotePDF(result, clientInfo, profile, branding) {
   const customNotes = result._customNotes || ''
 
   // רשימת כלול / לא כלול
-  const includedList = (branding.included_list && branding.included_list.length > 0)
-    ? branding.included_list.map(i => `<li style="padding:3px 0;">${i}</li>`).join('')
+  const included = filterIncluded(branding.included_list, result)
+  const includedList = included.length > 0
+    ? included.map(i => `<li style="padding:3px 0;">${i}</li>`).join('')
     : ''
 
   const excludedList = (branding.excluded_list && branding.excluded_list.length > 0)

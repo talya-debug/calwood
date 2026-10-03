@@ -294,7 +294,9 @@ export default function NewQuote() {
                   options={[{ v: 'horizontal', l: 'אופקי' }, { v: 'vertical', l: 'אנכי' }]} />
 
                 <Field label="סוג בסיס" value={dims.baseType} onChange={v => setDim('baseType', v)}
-                  options={[{ v: 'concrete', l: 'בטון' }, { v: 'akerstein', l: 'אקרשטיין' }, { v: 'none', l: 'ללא' }]} />
+                  options={[{ v: 'concrete', l: 'בטון' }, { v: 'akerstein', l: 'אקרשטיין' }, { v: 'none', l: 'ללא' }]}
+                  help={dims.baseType === 'concrete' && dims.height === 'low'
+                    ? 'בגובה עד 30 ס"מ לא מחושב בטון, ולכן ההצעה לא תכתוב "בסיסי בטון". בטון מחושב מ-30 ס"מ ומעלה.' : ''} />
 
                 <Field label="גישה" value={dims.access} onChange={v => setDim('access', v)}
                   options={[{ v: 'easy', l: 'קלה' }, { v: 'medium', l: 'בינונית' }, { v: 'hard', l: 'קשה' }]} />
