@@ -49,6 +49,8 @@ export default async function handler(req, res) {
         included_list = COALESCE($24, included_list),
         excluded_list = COALESCE($25, excluded_list),
         onboarding_done = COALESCE($26, onboarding_done),
+        pergola_sqm_per_day = COALESCE($27, pergola_sqm_per_day),
+        default_travel = COALESCE($28, default_travel),
         updated_at = now()
       WHERE clerk_id = $1
       RETURNING *
@@ -62,7 +64,8 @@ export default async function handler(req, res) {
       p.warranty_text, p.validity_text,
       p.included_list ? JSON.stringify(p.included_list) : null,
       p.excluded_list ? JSON.stringify(p.excluded_list) : null,
-      p.onboarding_done
+      p.onboarding_done,
+      p.pergola_sqm_per_day ?? null, p.default_travel ?? null,
     ])
     return res.json(rows[0])
   }

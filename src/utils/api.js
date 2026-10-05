@@ -6,6 +6,9 @@
 
 const PREFIX = 'calwood_'
 
+// סימון לפריט מחירון שהמחיר שלו עוד לא נבדק מול הקבלן
+export const TEMP_PRICE_NOTE = 'ערך זמני, לא אומת מול הקבלן'
+
 // שליפת clerk user id
 function getClerkUserId() {
   // נשמר על ידי SyncWrapper ב-App.jsx
@@ -181,6 +184,7 @@ function getDefaultProfile() {
     hourly_rate: 250, helper_daily: 900, overhead_pct: 5, profit_pct: 20, safety_pct: 5,
     supplier_discount: 0, pergola_days_with_helper: 3, pergola_days_alone: 5,
     deck_days_with_helper: 2, deck_days_alone: 3.5,
+    pergola_sqm_per_day: 16, default_travel: 200,
     logo_url: '', brand_color: '#2d5a3d', quote_title: 'הצעת מחיר',
     payment_terms: '', warranty_text: '', validity_text: '',
     included_list: ['חומרים', 'עבודה', 'הובלה לאתר', 'שימון/לכה', 'בסיסי בטון'],
@@ -214,7 +218,7 @@ function getDefaultMaterials() {
     { id: 32, category: 'ברגים וחיבורים', name: 'ברגי דק במבוק', width: 0, height: 0, piece_length: 0, pack_size: 80, unit: 'חבילה', price_per_unit: 135, supplier: '', is_active: true },
     { id: 33, category: 'ברגים וחיבורים', name: 'ברגי BH קירוי', width: 0, height: 0, piece_length: 0, pack_size: 400, unit: 'חבילה', price_per_unit: 400, supplier: '', is_active: true },
     { id: 34, category: 'ברגים וחיבורים', name: 'תושבת עמוד/קיר', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28, supplier: '', is_active: true },
-{ id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28.32, supplier: '', is_active: true },
+{ id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 60, supplier: '', is_active: true, note: TEMP_PRICE_NOTE },
     { id: 40, category: 'חומרי עזר', name: 'שמן/שימון', width: 0, height: 0, piece_length: 0, coverage: 1, unit: 'לפרויקט', price_per_unit: 400, supplier: '', is_active: true },
     { id: 41, category: 'חומרי עזר', name: 'זפת', width: 0, height: 0, piece_length: 0, coverage: 250, unit: 'דלי', price_per_unit: 162, supplier: '', is_active: true },
     { id: 50, category: 'תשתית', name: 'שק בטון', width: 0, height: 0, piece_length: 0, unit: 'שק', price_per_unit: 30, supplier: '', is_active: true },

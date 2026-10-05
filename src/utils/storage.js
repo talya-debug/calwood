@@ -43,6 +43,8 @@ export function getProfile() {
     pergola_days_alone: 5,         // פרגולה 12 מ"ר לבד
     deck_days_with_helper: 2,      // דק 20 מ"ר
     deck_days_alone: 3.5,          // דק 20 מ"ר לבד
+    pergola_sqm_per_day: 16,       // קצב עבודה פרגולה (מ"ר ליום) — לבקשת הקבלן
+    default_travel: 200,           // נסיעות ברירת מחדל להצעה
   })
 }
 
@@ -82,7 +84,7 @@ export function getMaterials() {
     _materialsVersionChecked = true
   }
   // מעוגל גם בקריאה — לקאש ישן שנשמר לפני התיקון
-  return load('materials', [
+  const list = load('materials', [
     // === עמודים ===
     // piece_length = אורך יחידה מהספק (מטר). המנוע מחשב כמה יחידות צריך.
     // price_per_unit = מחיר למ' ריצה. width/height = חתך בס"מ.
@@ -118,7 +120,7 @@ export function getMaterials() {
     { id: 32, category: 'ברגים וחיבורים', name: 'ברגי דק במבוק', width: 0, height: 0, piece_length: 0, pack_size: 80, unit: 'חבילה', price_per_unit: 135, supplier: '', is_active: true },
     { id: 33, category: 'ברגים וחיבורים', name: 'ברגי BH קירוי', width: 0, height: 0, piece_length: 0, pack_size: 400, unit: 'חבילה', price_per_unit: 400, supplier: '', is_active: true },
     { id: 34, category: 'ברגים וחיבורים', name: 'תושבת עמוד/קיר', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28, supplier: '', is_active: true },
-{ id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28.32, supplier: '', is_active: true },
+{ id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 60, supplier: '', is_active: true, note: TEMP_PRICE_NOTE },
 
     // === חומרי עזר ===
     { id: 40, category: 'חומרי עזר', name: 'שמן/שימון', width: 0, height: 0, piece_length: 0, coverage: 1, unit: 'לפרויקט', price_per_unit: 400, supplier: '', is_active: true },
@@ -136,6 +138,16 @@ export function getMaterials() {
     // === אחר ===
     { id: 80, category: 'אחר', name: 'מדרגה (חומר+עבודה)', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 800, supplier: '', is_active: true },
   ]).map(roundMaterial)
+  return addNewDefaultItems(list)
+}
+
+// פריטים שנוספו למחירון אחרי שהקבלן כבר שמר מחירון — מוסיפים אותם כדי שיוכל לראות ולערוך
+const NEW_DEFAULT_ITEMS = [
+  { id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 60, supplier: '', is_active: true, note: TEMP_PRICE_NOTE },
+]
+function addNewDefaultItems(list) {
+  const missing = NEW_DEFAULT_ITEMS.filter(d => !list.some(m => m.id === d.id))
+  return missing.length ? [...list, ...missing] : list
 }
 
 export function saveMaterials(materials) {
@@ -216,7 +228,7 @@ export function resetCacheIfUserChanged(userId) {
 import { fetchProfile, updateProfile as apiUpdateProfile, fetchMaterials, saveMaterialsToServer,
   fetchClients, createClient as apiCreateClient, removeClient as apiRemoveClient,
   fetchQuotes, createQuote as apiCreateQuote, updateQuote as apiUpdateQuote, removeQuote as apiRemoveQuote,
-  roundMaterial
+  roundMaterial, TEMP_PRICE_NOTE
 } from './api'
 
 // מושך את כל הנתונים מהשרת לקאש מקומי

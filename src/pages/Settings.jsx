@@ -180,6 +180,8 @@ export default function Settings() {
               <NumField label="אחוז רווח" suffix="%" value={profile.profit_pct} onChange={v => updateProfile('profit_pct', v)} />
             </div>
             <NumField label="הנחת ספק ברירת מחדל" suffix="%" value={profile.supplier_discount} onChange={v => updateProfile('supplier_discount', v)} />
+            <NumField label="נסיעות — ברירת מחדל להצעה" suffix="&#8362;" value={profile.default_travel ?? 200} onChange={v => updateProfile('default_travel', v)} />
+            <p className="text-xs text-[#717971] -mt-2">נסיעות, רווח ומרווח ביטחון — אפשר לשנות בכל הצעה בנפרד.</p>
             <p className="text-xs text-[#717971] bg-[#f3f4ef] rounded-lg p-3">
               תקורה = רכב, כלים, ביטוח. מרווח ביטחון = כיסוי אי-ודאויות. חישוב: (עלויות + תקורה) x ביטחון x רווח.
             </p>
@@ -188,11 +190,8 @@ export default function Settings() {
           {/* ימי עבודה */}
           <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
             <h3 className="text-lg font-bold text-[#1a1c1a]">ימי עבודה</h3>
-            <p className="text-xs text-[#717971]">פרגולה ממוצעת (3×4 מ') — כמה ימים?</p>
-            <div className="grid grid-cols-2 gap-4">
-              <NumField label="עם עוזר" suffix="ימים" value={profile.pergola_days_with_helper} onChange={v => updateProfile('pergola_days_with_helper', v)} />
-              <NumField label="לבד" suffix="ימים" value={profile.pergola_days_alone} onChange={v => updateProfile('pergola_days_alone', v)} />
-            </div>
+            <NumField label='פרגולה — קצב עבודה (מ"ר ליום)' suffix='מ"ר' value={profile.pergola_sqm_per_day ?? 16} onChange={v => updateProfile('pergola_sqm_per_day', v)} />
+            <p className="text-xs text-[#717971] -mt-2">ימי עבודה = שטח ÷ קצב (מינימום 2). ברירת מחדל 16. אפשר לשנות גם בכל הצעה.</p>
             <p className="text-xs text-[#717971]">דק ממוצע (20 מ"ר) — כמה ימים?</p>
             <div className="grid grid-cols-2 gap-4">
               <NumField label="עם עוזר" suffix="ימים" value={profile.deck_days_with_helper} onChange={v => updateProfile('deck_days_with_helper', v)} />
@@ -375,6 +374,12 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
           <div className="text-right">
             <div className="font-bold text-[#1a1c1a] text-base">{displayName}</div>
             {mat.supplier && <div className="text-[11px] text-[#717971]">ספק: {mat.supplier}</div>}
+            {mat.note && (
+              <div className="mt-1 flex items-center gap-2 justify-end" data-price-note>
+                <button onClick={() => updateMaterial(mat.id, 'note', '')} className="text-[10px] underline text-[#2d5a3d]">אומת — להסיר סימון</button>
+                <span className="text-[11px] font-bold text-[#C45D3E] bg-[#C45D3E]/10 rounded px-2 py-0.5">{mat.note}</span>
+              </div>
+            )}
             {mat.unit && <span className="text-[10px] bg-[#e7e9e4] text-[#414942] px-2 py-0.5 rounded-full">{mat.unit}</span>}
           </div>
         </div>

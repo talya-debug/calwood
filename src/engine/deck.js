@@ -47,6 +47,13 @@ function stockOf(materials, key) {
   return getStockLengths(materials.find(m => m.id === def.id && m.is_active))
 }
 
+// מספר משדה טופס: ריק = null (כדי שברירת המחדל תיכנס)
+function num(v) {
+  if (v === '' || v === null || v === undefined) return null
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+
 // פחת לקרשי דק — חישוב גס לפי הקבלן: שטח הדק + 15%
 export const DECK_BOARD_WASTE_PCT = 15
 // ריווח קורות תשתית בדק — 40 ס"מ לכל סוגי הקרשים (אקסל: הנדסה!B10)
@@ -77,8 +84,9 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   const materials = getMaterials()
   const board = getBoardData(materials, wood)
 
-  const safetyPct = profile.safety_pct ?? 5
-  const profitPct = profile.profit_pct ?? 20
+  // רווח וביטחון — מהגדרות העסק, וניתן לשנות בכל הצעה
+  const safetyPct = num(dims.safetyPct) ?? profile.safety_pct ?? 5
+  const profitPct = num(dims.profitPct) ?? profile.profit_pct ?? 20
   const MARGIN = (1 + safetyPct / 100) * (1 + profitPct / 100)
   const discount = supplierDiscount || profile.supplier_discount || 0
   const disc = (price) => Math.round(price * (1 - discount / 100) * 100) / 100
@@ -228,7 +236,8 @@ export function calculateDeck(dims, rules, materialsList, profile) {
   if (helperType === 'regular') costLaborHelper = workDays * helperDaily
   else if (helperType === 'pro') costLaborHelper = workDays * 1300
 
-  const travelCost = dims.travelCost || 200
+  // נסיעות — מהגדרות העסק, וניתן לשנות בכל הצעה
+  const travelCost = num(dims.travelCost) ?? num(profile.default_travel) ?? 200
 
   // גישה
   const accessBase = costBoards + costJoists + costSupport + getPrice(materials, 'oil') + costScrews +

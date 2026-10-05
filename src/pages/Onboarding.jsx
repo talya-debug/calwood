@@ -203,11 +203,8 @@ export default function Onboarding() {
                 </div>
               ) : (
                 <div className="space-y-3 bg-[#f3f4ef] rounded-xl p-4">
-                  <p className="text-xs font-bold text-[#414942]">פרגולה ממוצעת (3×4 מ') — כמה ימים?</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <LabelInput label="עם עוזר" value={profile.pergola_days_with_helper} onChange={v => updateProfile('pergola_days_with_helper', v)} type="number" />
-                    <LabelInput label="לבד" value={profile.pergola_days_alone} onChange={v => updateProfile('pergola_days_alone', v)} type="number" />
-                  </div>
+                  <p className="text-xs font-bold text-[#414942]">פרגולה — כמה מ"ר אתה מתקין ביום עבודה?</p>
+                  <LabelInput label='קצב עבודה (מ"ר ליום)' value={profile.pergola_sqm_per_day ?? 16} onChange={v => updateProfile('pergola_sqm_per_day', v)} type="number" />
 
                   <p className="text-xs font-bold text-[#414942]">דק ממוצע (20 מ"ר) — כמה ימים?</p>
                   <div className="grid grid-cols-2 gap-3">

@@ -14,7 +14,7 @@ const DEFAULTS = {
   post_15: { id: 1, price: 78 },
   post_20: { id: 2, price: 138 },
   bracket: { id: 34, price: 28.32 },
-  steel_splice: { id: 35, price: 28.32 }, // תושבת ברזל לחיבור קורות (2 לכל חיבור)
+  steel_splice: { id: 35, price: 60 },    // תושבת ברזל לחיבור קורות (2 לכל חיבור) — ערך זמני, לא אומת מול הקבלן
   concrete: { id: 50, price: 30 },
   screws_set: { id: 30, price: 500 },
   oil: { id: 40, price: 400 },
@@ -28,7 +28,15 @@ export const MAX_POST_SPAN = 7       // מפתח מקסימלי בין עמוד�
 export const BASE_BEAM_SPACING = 0.75 // ריווח קורות תשתית (אקסל: B10)
 export const ROOF_BEAM_SPACING = 0.75 // ריווח קורות גג (אקסל: הנדסה!B9)
 export const DEFAULT_BEAM_ID = 3      // 5x10 — ברירת מחדל לכל הקורות (לבקשת הקבלן, לא לפי תקן)
+export const PERGOLA_SQM_PER_DAY = 16  // קצב עבודה ברירת מחדל — לבקשת הקבלן (באקסל 8, כולל זפת קרה לתשתית)
 const TAR_COST = 90
+
+// מספר משדה טופס: ריק = null (כדי שברירת המחדל תיכנס), אחרת מספר
+function num(v) {
+  if (v === '' || v === null || v === undefined) return null
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
 const SPLICE_BRACKETS_PER_JOINT = 2
 
 export const OVER_LENGTH_OPTIONS = {
@@ -119,6 +127,8 @@ export function calculatePergola(dims, rules, materialsList, profile) {
   chosen.overLengthOptions = Object.entries(OVER_LENGTH_OPTIONS).map(([key, o]) => ({
     key, ...o, total: variants[key].totals.total, delta: variants[key].totals.total - variants.special.totals.total,
     posts: variants[key].engineering.postCount,
+    // מחיר התושבות עוד לא אומת — מסמנים באפשרות עצמה
+    priceNote: variants[key].lineItems.find(i => i.priceNote)?.priceNote || '',
   }))
   chosen.overLengthChoice = overLength
   chosen.engineering.overLength = probe.engineering.overLength
@@ -133,8 +143,9 @@ function computeVariant(dims, profile, overLengthMode, addPosts) {
   const materials = getMaterials()
   const matById = (id) => materials.find(m => m.id === Number(id) && m.is_active) || materials.find(m => m.id === DEFAULT_BEAM_ID)
 
-  const safetyPct = profile.safety_pct ?? 5
-  const profitPct = profile.profit_pct ?? 20
+  // רווח וביטחון — מהגדרות העסק, וניתן לשנות בכל הצעה
+  const safetyPct = num(dims.safetyPct) ?? profile.safety_pct ?? 5
+  const profitPct = num(dims.profitPct) ?? profile.profit_pct ?? 20
   const MARGIN = (1 + safetyPct / 100) * (1 + profitPct / 100)
   const discount = supplierDiscount || profile.supplier_discount || 0
   const hourlyRate = profile.hourly_rate ?? 250
@@ -207,7 +218,10 @@ function computeVariant(dims, profile, overLengthMode, addPosts) {
   if (steelJoints > 0) {
     const n = steelJoints * SPLICE_BRACKETS_PER_JOINT
     costSteel = Math.round(n * disc(getPrice(materials, 'steel_splice')))
-    lineItems.push({ name: 'תושבות ברזל לחיבור קורות', quantity: n, unit: "יח'", detail: `${steelJoints} חיבורים × ${SPLICE_BRACKETS_PER_JOINT}`, cost: costSteel })
+    const spliceMat = materials.find(m => m.id === DEFAULTS.steel_splice.id)
+    const priceNote = spliceMat ? spliceMat.note : 'ערך זמני, לא אומת מול הקבלן'
+    lineItems.push({ name: 'תושבות ברזל לחיבור קורות', quantity: n, unit: "יח'",
+      detail: `${steelJoints} חיבורים × ${SPLICE_BRACKETS_PER_JOINT}${priceNote ? ` | מחיר: ${priceNote}` : ''}`, cost: costSteel, priceNote })
   }
 
   const concreteBags = Math.ceil(postCount * 2.5)
@@ -231,17 +245,17 @@ function computeVariant(dims, profile, overLengthMode, addPosts) {
     lineItems.push({ name: `קירוי — ${rn[roofType]}`, quantity: 1, unit: '', detail: `${fmtM(area)} מ"ר`, cost: costCover })
   }
 
-  // עבודה — קצב לפי פרופיל הקבלן
-  const REF_AREA = 12
-  const hasHelper = helperType === 'regular' || helperType === 'pro'
-  const refDays = hasHelper ? (profile.pergola_days_with_helper ?? 3) : (profile.pergola_days_alone ?? 5)
-  const workDays = Math.max(2, Math.ceil(area / (REF_AREA / refDays) - 1e-9))
+  // עבודה — קצב במ"ר ליום: מההצעה, אחרת מהגדרות העסק, אחרת 16 (באקסל 8 — כולל צביעת תשתית בזפת קרה)
+  // ימי עבודה = מקסימום(2, עיגול למעלה של שטח ÷ קצב) — כמו נוסחת האקסל
+  const sqmPerDay = num(dims.sqmPerDay) || num(profile.pergola_sqm_per_day) || PERGOLA_SQM_PER_DAY
+  const workDays = Math.max(2, Math.ceil(area / sqmPerDay - 1e-9))
   const costLaborOwner = workDays * 8 * hourlyRate
   let costLaborHelper = 0
   if (helperType === 'regular') costLaborHelper = workDays * helperDaily
   else if (helperType === 'pro') costLaborHelper = workDays * 1300
 
-  const travelCost = dims.travelCost || 200
+  // נסיעות — מהגדרות העסק, וניתן לשנות בכל הצעה
+  const travelCost = num(dims.travelCost) ?? num(profile.default_travel) ?? 200
   const accessBase = costPosts + costSupport + costBaseBeams + costRoofBeams + costSteel + costConcrete + costMisc + costCover + costLaborOwner + costLaborHelper
   let costAccess = 0
   if (access === 'medium') costAccess = Math.round(accessBase * 0.075)
@@ -271,7 +285,7 @@ function computeVariant(dims, profile, overLengthMode, addPosts) {
       overLength: overLengthGap > 0 ? { gap: overLengthGap,
         longest: Math.max(longest(supportMat), longest(baseMat), longest(roofMat)) } : null },
     lineItems,
-    labor: { days: workDays, owner: costLaborOwner, helper: costLaborHelper, total: costLaborOwner + costLaborHelper },
+    labor: { days: workDays, sqmPerDay, owner: costLaborOwner, helper: costLaborHelper, total: costLaborOwner + costLaborHelper },
     travel: travelCost, accessCost: costAccess,
     includes: { concrete: concreteBags > 0 },
     totals,

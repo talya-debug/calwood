@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { calculatePergola, beamOptions, DEFAULT_BEAM_ID, MAX_POST_SPAN } from '../engine/pergola'
+import { calculatePergola, beamOptions, DEFAULT_BEAM_ID, MAX_POST_SPAN, PERGOLA_SQM_PER_DAY } from '../engine/pergola'
 import { calculateDeck, WOOD_TYPES } from '../engine/deck'
 import { getProfile, getBranding, getClients, saveQuoteAndSync, saveClientAndSync } from '../utils/storage'
 import { matchesSearch } from '../utils/search'
@@ -61,14 +61,18 @@ export default function NewQuote() {
   const [workType, setWorkType] = useState('')
   const [client, setClient] = useState({ name: '', phone: '', city: '' })
   const [showNewClient, setShowNewClient] = useState(false)
-  const [dims, setDims] = useState({
+  const [dims, setDims] = useState(() => ({
     width: '', length: '', height: '3', postSize: '15x15', attachType: 'wall',
-    roofType: 'none', access: 'easy', helperType: 'regular', travelCost: '250',
+    roofType: 'none', access: 'easy', helperType: 'regular',
+    // נסיעות, רווח, ביטחון וקצב עבודה — מתחילים מהגדרות העסק, וניתנים לשינוי בהצעה הזו בלבד
+    travelCost: String(getProfile().default_travel ?? 200),
+    profitPct: String(getProfile().profit_pct ?? 20), safetyPct: String(getProfile().safety_pct ?? 5),
+    sqmPerDay: String(getProfile().pergola_sqm_per_day ?? PERGOLA_SQM_PER_DAY),
     supplierDiscount: '', woodType: 'pine', direction: 'horizontal', baseType: 'concrete',
     stairs: '', supportBeam: false,
     // פרגולה: חלוקת מפתחים ידנית, חתכי קורות (ברירת מחדל 5x10), ומה עושים בקורה ארוכה מהמלאי
     spansText: '', supportMatId: DEFAULT_BEAM_ID, baseMatId: DEFAULT_BEAM_ID, roofMatId: DEFAULT_BEAM_ID, overLength: 'special',
-  })
+  }))
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savedResult, setSavedResult] = useState(null)
@@ -86,7 +90,7 @@ export default function NewQuote() {
     if (!hasInput || !workType) return null
     const d = { ...dims, width: parseFloat(dims.width) || 0, length: parseFloat(dims.length) || 0,
       height: workType === 'pergola' ? (parseFloat(dims.height) || 3) : dims.height,
-      travelCost: parseFloat(dims.travelCost) || 250, supplierDiscount: parseFloat(dims.supplierDiscount) || 0,
+      supplierDiscount: parseFloat(dims.supplierDiscount) || 0,
       stairs: parseInt(dims.stairs) || 0 }
     return workType === 'pergola' ? calculatePergola(d, [], [], profile) : calculateDeck(d, [], [], profile)
   }, [workType, dims, hasInput])
@@ -326,7 +330,6 @@ export default function NewQuote() {
                 <Field label="סוג עוזר" value={dims.helperType} onChange={v => setDim('helperType', v)}
                   options={[{ v: 'regular', l: 'עוזר רגיל' }, { v: 'pro', l: 'מקצועי' }, { v: 'none', l: 'ללא' }]} />
 
-                <NumInput label="עלות נסיעה" value={dims.travelCost} onChange={v => setDim('travelCost', v)} suffix="₪" />
                 <NumInput label="הנחת ספק" value={dims.supplierDiscount} onChange={v => setDim('supplierDiscount', v)} suffix="%" />
               </>
             )}
@@ -365,7 +368,6 @@ export default function NewQuote() {
                   options={[{ v: 'regular', l: 'רגיל' }, { v: 'pro', l: 'מקצועי' }, { v: 'none', l: 'ללא' }]} />
 
                 <NumInput label="מדרגות" value={dims.stairs} onChange={v => setDim('stairs', v)} suffix="יח'" />
-                <NumInput label="נסיעה" value={dims.travelCost} onChange={v => setDim('travelCost', v)} suffix="₪" />
                 <NumInput label="הנחת ספק" value={dims.supplierDiscount} onChange={v => setDim('supplierDiscount', v)} suffix="%" />
 
                 <label className="flex items-center gap-3 cursor-pointer py-2">
@@ -375,6 +377,23 @@ export default function NewQuote() {
                 </label>
               </>
             )}
+
+            {/* הגדרות להצעה הזו — מתחילות מהגדרות העסק, שינוי כאן לא משנה את ההגדרות הכלליות */}
+            <div className="border-t border-[#edeeea] pt-4 space-y-2" data-quote-settings>
+              <p className="text-sm font-bold text-[#1a1c1a]">הגדרות להצעה הזו</p>
+              <p className="text-xs text-[#717971] -mt-1">ברירת המחדל מהגדרות העסק. שינוי כאן חל רק על ההצעה הזו.</p>
+              <NumInput label="נסיעות" value={dims.travelCost} onChange={v => setDim('travelCost', v)} suffix="₪" />
+              <NumInput label="רווח" value={dims.profitPct} onChange={v => setDim('profitPct', v)} suffix="%" />
+              <NumInput label="מרווח ביטחון" value={dims.safetyPct} onChange={v => setDim('safetyPct', v)} suffix="%" />
+              {workType === 'pergola' && (
+                <>
+                  <NumInput label='קצב עבודה (מ"ר ליום)' value={dims.sqmPerDay} onChange={v => setDim('sqmPerDay', v)} suffix='מ"ר' />
+                  {result?.labor?.days > 0 && (
+                    <p className="text-xs text-[#717971]">{fmtNum(result.area)} מ"ר ÷ {fmtNum(result.labor.sqmPerDay)} מ"ר ליום = {result.labor.days} ימי עבודה (מינימום 2)</p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* קורה ארוכה ממה שיש אצל הספק — שלוש אפשרויות לבחירה */}
@@ -393,6 +412,7 @@ export default function NewQuote() {
                       <span className="text-sm font-bold text-[#414942] shrink-0">{fmt(o.total)}₪ {o.delta !== 0 && <span className="text-xs font-normal text-[#717971]">({o.delta > 0 ? '+' : ''}{fmt(o.delta)})</span>}</span>
                     </div>
                     <p className="text-xs text-[#717971] mt-0.5">{o.desc}{o.key === 'post' ? ` — סה"כ ${o.posts} עמודים` : ''}</p>
+                    {o.priceNote && <p className="text-[11px] text-[#C45D3E] font-bold mt-0.5">מחיר התושבות: {o.priceNote} (לעדכן במחירון)</p>}
                   </button>
                 ))}
               </div>
