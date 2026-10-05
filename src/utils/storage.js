@@ -99,7 +99,7 @@ export function getMaterials() {
 
     // === לוחות דק ===
     // piece_length = אורך הלוח שהספק מוכר. board_width = רוחב נטו (ס"מ).
-    { id: 10, category: 'לוחות דק', name: 'דק אורן', width: 16, height: 4, piece_length: 3.6, board_width: 15.5, unit: "₪/מ'", price_per_unit: 12, supplier: '', is_active: true },
+    { id: 10, category: 'לוחות דק', name: 'דק אורן', width: 16, height: 4, piece_length: 3.6, board_width: 15, unit: "₪/מ'", price_per_unit: 12, supplier: '', is_active: true },
     { id: 11, category: 'לוחות דק', name: 'דק במבוק כהה', width: 13.7, height: 2, piece_length: 1.85, board_width: 14.2, unit: "₪/מ'", price_per_unit: 38.94, supplier: '', is_active: true },
     { id: 12, category: 'לוחות דק', name: 'דק במבוק בהיר', width: 13.7, height: 2, piece_length: 1.85, board_width: 14.2, unit: "₪/מ'", price_per_unit: 43.66, supplier: '', is_active: true },
     { id: 13, category: 'לוחות דק', name: 'דק איפאה', width: 15, height: 2.5, piece_length: 2.2, board_width: 15, unit: "₪/מ'", price_per_unit: 64.90, supplier: '', is_active: true },
@@ -118,6 +118,7 @@ export function getMaterials() {
     { id: 32, category: 'ברגים וחיבורים', name: 'ברגי דק במבוק', width: 0, height: 0, piece_length: 0, pack_size: 80, unit: 'חבילה', price_per_unit: 135, supplier: '', is_active: true },
     { id: 33, category: 'ברגים וחיבורים', name: 'ברגי BH קירוי', width: 0, height: 0, piece_length: 0, pack_size: 400, unit: 'חבילה', price_per_unit: 400, supplier: '', is_active: true },
     { id: 34, category: 'ברגים וחיבורים', name: 'תושבת עמוד/קיר', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28, supplier: '', is_active: true },
+{ id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28.32, supplier: '', is_active: true },
 
     // === חומרי עזר ===
     { id: 40, category: 'חומרי עזר', name: 'שמן/שימון', width: 0, height: 0, piece_length: 0, coverage: 1, unit: 'לפרויקט', price_per_unit: 400, supplier: '', is_active: true },

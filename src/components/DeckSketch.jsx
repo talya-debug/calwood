@@ -1,7 +1,7 @@
 /**
  * שרטוט דק — מבט מלמעלה + חתך צד, גדול וברור
  */
-export default function DeckSketch({ width, length, direction, woodType, height, stairs, joistCount, boardRows, boardPieces, joistPieces }) {
+export default function DeckSketch({ width, length, direction, woodType, height, stairs, joistCount, boardRows, boardPieces, joistPieces, boardsBought, boardsCutFrom }) {
   if (!width || !length) return null
 
   // === פרופורציות נכונות ===
@@ -196,8 +196,9 @@ export default function DeckSketch({ width, length, direction, woodType, height,
       </svg>
       {/* מקרא — טקסט רגיל מתחת לשרטוט, כדי שלא ייחתך */}
       <div className="mt-3 text-xs text-[#414942] text-center leading-relaxed" data-sketch-legend>
-        {woodNames[woodType] || 'אורן'} | {rows} שורות × {pieces.length} = {boardRects.length} לוחות | {jCount} קורות תשתית | {Math.round(width * length * 100) / 100} מ"ר
+        {woodNames[woodType] || 'אורן'} | {rows} שורות{pieces.length > 1 ? ` (כל שורה ${pieces.map(p => Math.round(p * 100) / 100).join(' + ')} מ')` : ''} | {jCount} קורות תשתית | {Math.round(width * length * 100) / 100} מ"ר
         {stairCount > 0 ? ` | ${stairCount} מדרגות` : ''}
+        {boardsBought > 0 && <span className="block">קונים {boardsBought} לוחות (שטח + 15%). כל החתיכות בשרטוט נחתכות מתוך {boardsCutFrom} לוחות לפי תוכנית החיתוך</span>}
         {jointMarks.length > 0 && <span className="block text-[#C45D3E]">נקודה כתומה = חיבור קורת תשתית על רגל</span>}
       </div>
     </div>

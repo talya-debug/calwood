@@ -1,7 +1,7 @@
 /**
  * שרטוט פרגולה — מבט מלמעלה. כל המיקומים מגיעים מהמנוע (engineering.layout),
  * כך שהשרטוט מציג בדיוק את אותם עמודים, תומכים וקורות כמו בכתב הכמויות.
- * ציר אופקי = L (לאורך הקיר), ציר אנכי = W (עומק). בצמוד קיר — הקיר למעלה.
+ * ציר אופקי = W (רוחב, לאורך הקיר), ציר אנכי = L (אורך, הבולט מהקיר). בצמוד קיר — הקיר למעלה.
  */
 const COLORS = { support: '#5C3317', base: '#A0522D', roof: '#C4A35A', post: '#1a1c1a', wall: '#9a9a9a' }
 
@@ -12,8 +12,8 @@ export default function PergolaSketch({ engineering, height, roofType }) {
 
   // קנה מידה — שומר על פרופורציות
   const maxW = 330, maxH = 230
-  const s = Math.min(maxW / L, maxH / W)
-  const dw = L * s, dh = W * s
+  const s = Math.min(maxW / W, maxH / L)
+  const dw = W * s, dh = L * s
   const padX = 55, padTop = 50, padBottom = 30
   const svgW = dw + padX * 2
   const svgH = dh + padTop + padBottom
@@ -34,28 +34,28 @@ export default function PergolaSketch({ engineering, height, roofType }) {
         {lay.attachType === 'wall' && (
           <>
             <rect x={X(0) - 8} y={Y(0) - 12} width={dw + 16} height={8} fill={COLORS.wall} opacity="0.35" />
-            <text x={X(L / 2)} y={Y(0) - 18} textAnchor="middle" fontSize="10" fill="#777">קיר הבניין</text>
+            <text x={X(W / 2)} y={Y(0) - 18} textAnchor="middle" fontSize="10" fill="#777">קיר הבניין</text>
           </>
         )}
 
         {/* קירוי */}
         {hasRoof && <rect x={X(0)} y={Y(0)} width={dw} height={dh} fill="rgba(31,56,100,0.07)" />}
 
-        {/* תומכי תשתית — לאורך W, אחד בכל שורת עמודים */}
-        {lay.supports.map((x, i) => (
-          <line key={`s${i}`} data-part="support" x1={X(x)} y1={Y(0)} x2={X(x)} y2={Y(W)}
+        {/* תומכי תשתית — לאורך הרוחב, אחד בכל שורת עמודים */}
+        {lay.supports.map((y, i) => (
+          <line key={`s${i}`} data-part="support" x1={X(0)} y1={Y(y)} x2={X(W)} y2={Y(y)}
             stroke={COLORS.support} strokeWidth="6" strokeLinecap="round" />
         ))}
 
-        {/* קורות תשתית — לאורך L, מעל התומכים */}
-        {lay.baseBeams.map((y, i) => (
-          <line key={`b${i}`} data-part="base" x1={X(0)} y1={Y(y)} x2={X(L)} y2={Y(y)}
+        {/* קורות תשתית — מהקיר החוצה, מעל התומכים */}
+        {lay.baseBeams.map((x, i) => (
+          <line key={`b${i}`} data-part="base" x1={X(x)} y1={Y(0)} x2={X(x)} y2={Y(L)}
             stroke={COLORS.base} strokeWidth="3.5" />
         ))}
 
-        {/* קורות גג — לאורך W, העליונות */}
-        {lay.roofBeams.map((x, i) => (
-          <line key={`r${i}`} data-part="roof" x1={X(x)} y1={Y(0)} x2={X(x)} y2={Y(W)}
+        {/* קורות גג — לאורך הרוחב, העליונות */}
+        {lay.roofBeams.map((y, i) => (
+          <line key={`r${i}`} data-part="roof" x1={X(0)} y1={Y(y)} x2={X(W)} y2={Y(y)}
             stroke={COLORS.roof} strokeWidth="1.8" opacity="0.9" />
         ))}
 
@@ -66,12 +66,12 @@ export default function PergolaSketch({ engineering, height, roofType }) {
         ))}
 
         {/* מידות */}
-        <line x1={X(0)} y1={Y(W) + 16} x2={X(L)} y2={Y(W) + 16} stroke="#1F3864" strokeWidth="1.2" />
-        <text x={X(L / 2)} y={Y(W) + 28} textAnchor="middle" fontSize="13" fill="#1F3864" fontWeight="bold">{fmt(L)} מ' (L)</text>
-        <line x1={X(L) + 16} y1={Y(0)} x2={X(L) + 16} y2={Y(W)} stroke="#1F3864" strokeWidth="1.2" />
+        <line x1={X(0)} y1={Y(L) + 16} x2={X(W)} y2={Y(L) + 16} stroke="#1F3864" strokeWidth="1.2" />
+        <text x={X(W / 2)} y={Y(L) + 28} textAnchor="middle" fontSize="13" fill="#1F3864" fontWeight="bold">רוחב {fmt(W)} מ'</text>
+        <line x1={X(W) + 16} y1={Y(0)} x2={X(W) + 16} y2={Y(L)} stroke="#1F3864" strokeWidth="1.2" />
         {/* הדף מימין לשמאל — ולכן end = הטקסט נמתח ימינה מהנקודה, ולא עולה על קו המידה */}
-        <text x={X(L) + 22} y={Y(W / 2) + 4} textAnchor="end" fontSize="13" fill="#1F3864" fontWeight="bold">{fmt(W)} מ'</text>
-        <text x={X(L) + 22} y={Y(W / 2) + 18} textAnchor="end" fontSize="10" fill="#1F3864">(W)</text>
+        <text x={X(W) + 22} y={Y(L / 2) + 4} textAnchor="end" fontSize="13" fill="#1F3864" fontWeight="bold">{fmt(L)} מ'</text>
+        <text x={X(W) + 22} y={Y(L / 2) + 18} textAnchor="end" fontSize="10" fill="#1F3864">אורך</text>
       </svg>
 
       {/* מקרא — טקסט רגיל, לא בתוך השרטוט, כדי שלא ייחתך */}

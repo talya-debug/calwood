@@ -185,9 +185,14 @@ export function buildMaterialsHtml(result, profile) {
     result.type === 'deck' && eng.joistCount && `${eng.joistCount} קורות תשתית באורך ${fmt(eng.joistLength)} מ'`,
     result.type === 'deck' && eng.boardRows && `${eng.boardRows} שורות קרשים × ${eng.boardsPerRow}`,
   ].filter(Boolean)
-  const engNote = engParts.length ? `<div style="background:#f0f4ff;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1F3864;">
+  if (eng.spansW?.length) engParts.push(`מפתחים לרוחב: ${eng.spansW.map(s => fmt(s)).join(' + ')} מ'`)
+  const overChoice = result.overLengthOptions?.find(o => o.key === result.overLengthChoice)
+  const engNote = (engParts.length ? `<div style="background:#f0f4ff;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#1F3864;">
       <strong>${result.type === 'deck' ? 'מבנה:' : 'חתכים הנדסיים:'}</strong> ${engParts.join(' | ')}
-    </div>` : ''
+    </div>` : '')
+    // הערות פנימיות לקבלן — כתב הכמויות לא נשלח ללקוח
+    + (eng.standardNote ? `<div style="background:#fff8e6;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#7a5900;">${eng.standardNote}</div>` : '')
+    + (overChoice ? `<div style="background:#fff8e6;border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:12px;color:#7a5900;">קורה של ${fmt(eng.overLength?.gap)} מ' ארוכה מהמלאי (${fmt(eng.overLength?.longest)} מ') — נבחר: ${overChoice.label}</div>` : '')
 
   const html = `
     <div style="direction:rtl;font-family:'Segoe UI',Arial,sans-serif;color:#1a1c19;padding:20px;max-width:700px;">

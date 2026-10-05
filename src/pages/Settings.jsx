@@ -399,13 +399,11 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
         </div>
       </div>
 
+      {hasDimensions && <StockLengthsEditor mat={mat} updateMaterial={updateMaterial} />}
+
       {hasDimensions && (
-        <div className="grid grid-cols-3 gap-2">
-          <div>
-            <label className="text-[10px] text-[#717971]">אורך יחידה (מ')</label>
-            <input type="number" step="0.1" value={r2(mat.piece_length)} onChange={e => updateMaterial(mat.id, 'piece_length', Number(e.target.value))}
-              className="w-full h-9 px-2 border border-[#c1c9c0] rounded-lg text-sm bg-[#fdce6c]/10 focus:border-[#2d5a3d] outline-none" />
-          </div>
+        <div className="grid grid-cols-2 gap-2">
+          {/* אורך היחידה נקבע עכשיו ב"אורכים אצל הספק" למעלה */}
           <div>
             <label className="text-[10px] text-[#717971]">רוחב (ס"מ)</label>
             <input type="number" step="0.1" value={r2(mat.width)} onChange={e => updateMaterial(mat.id, 'width', Number(e.target.value))}
@@ -418,6 +416,45 @@ function MaterialRow({ mat, updateMaterial, deleteMaterial }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// אורכים אצל הספק — עד 4. הקבלן מסמן מה יש במלאי כרגע, והמערכת מחשבת חיתוך רק מהם
+const MAX_STOCK_LENGTHS = 4
+function StockLengthsEditor({ mat, updateMaterial }) {
+  const list = Array.isArray(mat.stock_lengths) && mat.stock_lengths.length
+    ? mat.stock_lengths
+    : [{ length: r2(mat.piece_length), in_stock: true }]
+  const slots = [...list, ...Array(MAX_STOCK_LENGTHS).fill(null)].slice(0, MAX_STOCK_LENGTHS)
+    .map(s => s || { length: '', in_stock: true })
+
+  const save = (next) => {
+    const clean = next.filter(s => Number(s.length) > 0).map(s => ({ length: r2(s.length), in_stock: s.in_stock !== false }))
+    updateMaterial(mat.id, 'stock_lengths', clean)
+    // אורך היחידה הרגיל = הקצר שבמלאי (לתאימות עם מסכים ישנים)
+    const inStock = clean.filter(s => s.in_stock).map(s => s.length).sort((a, b) => a - b)
+    if (inStock.length) updateMaterial(mat.id, 'piece_length', inStock[0])
+  }
+  const setSlot = (i, patch) => save(slots.map((s, k) => (k === i ? { ...s, ...patch } : s)))
+
+  return (
+    <div className="bg-[#f3f4ef] rounded-lg p-2" data-stock-lengths>
+      <div className="text-[10px] text-[#717971] mb-1">אורכים אצל הספק (מ') — סמנו מה במלאי</div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {slots.map((s, i) => (
+          <div key={i} className={`rounded-md border px-1.5 py-1 ${s.length && s.in_stock ? 'border-[#2d5a3d] bg-white' : 'border-[#c1c9c0] bg-white/60'}`}>
+            <input type="number" step="0.1" value={s.length === '' ? '' : r2(s.length)} placeholder="—"
+              onChange={e => setSlot(i, { length: e.target.value === '' ? '' : Number(e.target.value) })}
+              className="w-full h-7 text-sm text-center font-bold bg-transparent outline-none" />
+            <label className="flex items-center justify-center gap-1 text-[10px] text-[#414942]">
+              <input type="checkbox" checked={!!s.length && s.in_stock !== false} disabled={!s.length}
+                onChange={e => setSlot(i, { in_stock: e.target.checked })} />
+              במלאי
+            </label>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

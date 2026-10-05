@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { calculatePergola } from '../engine/pergola'
+import { calculatePergola, beamOptions, DEFAULT_BEAM_ID, MAX_POST_SPAN } from '../engine/pergola'
 import { calculateDeck, WOOD_TYPES } from '../engine/deck'
 import { getProfile, getBranding, getClients, saveQuoteAndSync, saveClientAndSync } from '../utils/storage'
 import { matchesSearch } from '../utils/search'
@@ -66,6 +66,8 @@ export default function NewQuote() {
     roofType: 'none', access: 'easy', helperType: 'regular', travelCost: '250',
     supplierDiscount: '', woodType: 'pine', direction: 'horizontal', baseType: 'concrete',
     stairs: '', supportBeam: false,
+    // פרגולה: חלוקת מפתחים ידנית, חתכי קורות (ברירת מחדל 5x10), ומה עושים בקורה ארוכה מהמלאי
+    spansText: '', supportMatId: DEFAULT_BEAM_ID, baseMatId: DEFAULT_BEAM_ID, roofMatId: DEFAULT_BEAM_ID, overLength: 'special',
   })
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -234,11 +236,13 @@ export default function NewQuote() {
                 <label className="block text-sm text-[#414942] mb-1 font-medium">אורך (מטר)</label>
                 <input type="number" value={dims.length} onChange={e => setDim('length', e.target.value)}
                   placeholder="0.0" step="0.1" className="w-full h-14 px-4 border border-[#c1c9c0] rounded-xl text-xl text-center font-bold focus:border-[#2d5a3d] focus:border-2 outline-none" />
+                {workType === 'pergola' && <p className="text-[11px] text-[#717971] mt-1">{dims.attachType === 'wall' ? 'כמה בולט מהקיר' : 'העומק'}</p>}
               </div>
               <div>
                 <label className="block text-sm text-[#414942] mb-1 font-medium">רוחב (מטר)</label>
                 <input type="number" value={dims.width} onChange={e => setDim('width', e.target.value)}
                   placeholder="0.0" step="0.1" className="w-full h-14 px-4 border border-[#c1c9c0] rounded-xl text-xl text-center font-bold focus:border-[#2d5a3d] focus:border-2 outline-none" />
+                {workType === 'pergola' && <p className="text-[11px] text-[#717971] mt-1">{dims.attachType === 'wall' ? 'לאורך הקיר' : 'לאורך החזית'}</p>}
               </div>
             </div>
 
@@ -258,8 +262,39 @@ export default function NewQuote() {
                   </div>
                   {result?.engineering?.postCount > 0 && (
                     <p className="text-xs text-[#717971] mt-1.5">
-                      יחושבו {result.engineering.postCount} עמודים — עמוד לפחות כל 3 מ'
-                      {dims.attachType === 'free' ? ` (${result.engineering.supportCount} לאורך × ${result.engineering.postRows} לעומק)` : ' לאורך הצד הפתוח'}
+                      יחושבו {result.engineering.postCount} עמודים — מפתח של עד {MAX_POST_SPAN} מ' בין עמודים
+                      {` (${result.engineering.spansW.length + 1} לרוחב × ${result.engineering.supportCount} שורות)`}
+                    </p>
+                  )}
+                </div>
+
+                {/* חלוקת מפתחים ידנית */}
+                <div>
+                  <label className="block text-sm text-[#414942] mb-1 font-medium">חלוקת מפתחים לרוחב (לא חובה)</label>
+                  <input value={dims.spansText} onChange={e => setDim('spansText', e.target.value)} placeholder={`אוטומטי. למשל: 5+2`}
+                    className="w-full h-11 px-4 border border-[#c1c9c0] rounded-xl text-sm focus:border-[#2d5a3d] outline-none" dir="ltr" />
+                  {result?.engineering?.spansError
+                    ? <p className="text-xs text-red-600 mt-1">{result.engineering.spansError} — בינתיים מחושב אוטומטית</p>
+                    : <p className="text-xs text-[#717971] mt-1">מפתחים בפועל: {result?.engineering?.spansW?.map(s => fmtNum(s)).join(' + ') || '—'} מ'. אפשר חלוקה לא שווה. מקסימום {MAX_POST_SPAN} מ'.</p>}
+                </div>
+
+                {/* חתכי קורות — ברירת מחדל 5x10 */}
+                <div>
+                  <label className="block text-sm text-[#414942] mb-2 font-medium">חתכי קורות</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[['supportMatId', 'תומך'], ['baseMatId', 'קורת תשתית'], ['roofMatId', 'קורת גג']].map(([key, label]) => (
+                      <label key={key} className="text-xs text-[#717971]">
+                        {label}
+                        <select value={dims[key]} onChange={e => setDim(key, Number(e.target.value))}
+                          className="w-full h-10 mt-1 px-2 border border-[#c1c9c0] rounded-lg text-sm bg-white text-[#1a1c1a]">
+                          {beamOptions().map(o => <option key={o.id} value={o.id}>{o.section}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                  {result?.engineering?.standardNote && (
+                    <p className="text-xs text-[#7a5900] bg-[#fdce6c]/20 rounded-lg p-2 mt-2" data-standard-note>
+                      {result.engineering.standardNote} (הערה פנימית — לא מופיעה בהצעה ללקוח)
                     </p>
                   )}
                 </div>
@@ -342,6 +377,28 @@ export default function NewQuote() {
             )}
           </div>
 
+          {/* קורה ארוכה ממה שיש אצל הספק — שלוש אפשרויות לבחירה */}
+          {result?.overLengthOptions && (
+            <div className="bg-white rounded-2xl border-2 border-[#fdce6c] p-4 space-y-3" data-over-length>
+              <div>
+                <h3 className="font-bold text-[#1a1c1a]">צריך קורה של {fmtNum(result.engineering.overLength.gap)} מ' — הארוכה אצל הספק {fmtNum(result.engineering.overLength.longest)} מ'</h3>
+                <p className="text-xs text-[#717971] mt-0.5">בחרו איך לפתור. המחיר מתעדכן לפי הבחירה (אפשר לעדכן אורכים במחירון).</p>
+              </div>
+              <div className="grid gap-2">
+                {result.overLengthOptions.map(o => (
+                  <button key={o.key} onClick={() => setDim('overLength', o.key)}
+                    className={`text-right rounded-xl border-2 p-3 transition-all ${dims.overLength === o.key ? 'border-[#2d5a3d] bg-[#bceec8]/15' : 'border-[#e7e9e4] bg-white hover:border-[#c1c9c0]'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold text-[#1a1c1a]">{o.label}</span>
+                      <span className="text-sm font-bold text-[#414942] shrink-0">{fmt(o.total)}₪ {o.delta !== 0 && <span className="text-xs font-normal text-[#717971]">({o.delta > 0 ? '+' : ''}{fmt(o.delta)})</span>}</span>
+                    </div>
+                    <p className="text-xs text-[#717971] mt-0.5">{o.desc}{o.key === 'post' ? ` — סה"כ ${o.posts} עמודים` : ''}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* שרטוט */}
           {result && workType === 'pergola' && (
             <PergolaSketch engineering={result.engineering} height={parseFloat(dims.height) || 3} roofType={dims.roofType} />
@@ -350,7 +407,8 @@ export default function NewQuote() {
             <DeckSketch width={parseFloat(dims.width)} length={parseFloat(dims.length)}
               direction={dims.direction} woodType={dims.woodType} height={dims.height} stairs={parseInt(dims.stairs) || 0}
               joistCount={result.engineering?.joistCount} boardRows={result.engineering?.boardRows}
-              boardPieces={result.engineering?.boardPieces} joistPieces={result.engineering?.joistPieces} />
+              boardPieces={result.engineering?.boardPieces} joistPieces={result.engineering?.joistPieces}
+              boardsBought={result.engineering?.totalBoards} boardsCutFrom={result.engineering?.boardsCutFrom} />
           )}
 
           {/* תוצאות */}
@@ -490,6 +548,11 @@ function NumInput({ label, value, onChange, suffix }) {
       <label className="text-sm text-[#414942] font-medium">{label}</label>
     </div>
   )
+}
+
+// מספר לתצוגה — עד 2 ספרות אחרי הנקודה
+function fmtNum(n) {
+  return (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('he-IL', { maximumFractionDigits: 2 })
 }
 
 // missing import used in step 2

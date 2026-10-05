@@ -36,6 +36,10 @@ export function roundMaterial(m) {
   for (const f of NUMERIC_FIELDS) {
     if (out[f] !== undefined && out[f] !== null && out[f] !== '') out[f] = Math.round(Number(out[f]) * 100) / 100
   }
+  // אורכי מלאי אצל הספק — עד 4
+  if (Array.isArray(out.stock_lengths)) {
+    out.stock_lengths = out.stock_lengths.slice(0, 4).map(s => ({ length: Math.round(Number(s.length) * 100) / 100 || '', in_stock: s.in_stock !== false }))
+  }
   return out
 }
 
@@ -195,7 +199,7 @@ function getDefaultMaterials() {
     { id: 5, category: 'קורות', name: 'קורה 5x20', width: 5, height: 20, piece_length: 4, unit: "₪/מ'", price_per_unit: 32, supplier: '', is_active: true },
     { id: 6, category: 'קורות', name: 'קורה 7x20', width: 7, height: 20, piece_length: 4, unit: "₪/מ'", price_per_unit: 45, supplier: '', is_active: true },
     { id: 7, category: 'קורות', name: 'קורה 10x25', width: 10, height: 25, piece_length: 4, unit: "₪/מ'", price_per_unit: 65, supplier: '', is_active: true },
-    { id: 10, category: 'לוחות דק', name: 'דק אורן', width: 16, height: 4, piece_length: 3.6, board_width: 15.5, unit: "₪/מ'", price_per_unit: 12, supplier: '', is_active: true },
+    { id: 10, category: 'לוחות דק', name: 'דק אורן', width: 16, height: 4, piece_length: 3.6, board_width: 15, unit: "₪/מ'", price_per_unit: 12, supplier: '', is_active: true },
     { id: 11, category: 'לוחות דק', name: 'דק במבוק כהה', width: 13.7, height: 2, piece_length: 1.85, board_width: 14.2, unit: "₪/מ'", price_per_unit: 38.94, supplier: '', is_active: true },
     { id: 12, category: 'לוחות דק', name: 'דק במבוק בהיר', width: 13.7, height: 2, piece_length: 1.85, board_width: 14.2, unit: "₪/מ'", price_per_unit: 43.66, supplier: '', is_active: true },
     { id: 13, category: 'לוחות דק', name: 'דק איפאה', width: 15, height: 2.5, piece_length: 2.2, board_width: 15, unit: "₪/מ'", price_per_unit: 64.90, supplier: '', is_active: true },
@@ -210,6 +214,7 @@ function getDefaultMaterials() {
     { id: 32, category: 'ברגים וחיבורים', name: 'ברגי דק במבוק', width: 0, height: 0, piece_length: 0, pack_size: 80, unit: 'חבילה', price_per_unit: 135, supplier: '', is_active: true },
     { id: 33, category: 'ברגים וחיבורים', name: 'ברגי BH קירוי', width: 0, height: 0, piece_length: 0, pack_size: 400, unit: 'חבילה', price_per_unit: 400, supplier: '', is_active: true },
     { id: 34, category: 'ברגים וחיבורים', name: 'תושבת עמוד/קיר', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28, supplier: '', is_active: true },
+{ id: 35, category: 'ברגים וחיבורים', name: 'תושבת ברזל לחיבור קורות', width: 0, height: 0, piece_length: 0, unit: "יח'", price_per_unit: 28.32, supplier: '', is_active: true },
     { id: 40, category: 'חומרי עזר', name: 'שמן/שימון', width: 0, height: 0, piece_length: 0, coverage: 1, unit: 'לפרויקט', price_per_unit: 400, supplier: '', is_active: true },
     { id: 41, category: 'חומרי עזר', name: 'זפת', width: 0, height: 0, piece_length: 0, coverage: 250, unit: 'דלי', price_per_unit: 162, supplier: '', is_active: true },
     { id: 50, category: 'תשתית', name: 'שק בטון', width: 0, height: 0, piece_length: 0, unit: 'שק', price_per_unit: 30, supplier: '', is_active: true },

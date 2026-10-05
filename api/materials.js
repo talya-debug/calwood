@@ -28,9 +28,11 @@ export default async function handler(req, res) {
     await pool.query('DELETE FROM materials WHERE profile_id = $1', [profileId])
     for (const m of items) {
       await pool.query(`
-        INSERT INTO materials (profile_id, mat_id, category, name, width, height, piece_length, board_width, pack_size, coverage, unit, price_per_unit, supplier, is_active)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-      `, [profileId, m.id, m.category, m.name, m.width||0, m.height||0, m.piece_length||0, m.board_width||0, m.pack_size||0, m.coverage||0, m.unit, m.price_per_unit, m.supplier||'', m.is_active !== false])
+        INSERT INTO materials (profile_id, mat_id, category, name, width, height, piece_length, board_width, pack_size, coverage, unit, price_per_unit, supplier, is_active, stock_lengths)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+      `, [profileId, m.id, m.category, m.name, m.width||0, m.height||0, m.piece_length||0, m.board_width||0, m.pack_size||0, m.coverage||0, m.unit, m.price_per_unit, m.supplier||'', m.is_active !== false,
+          // אורכי מלאי אצל הספק: [{ length, in_stock }] — עד 4
+          JSON.stringify(Array.isArray(m.stock_lengths) ? m.stock_lengths.slice(0, 4) : [])])
     }
     return res.json({ ok: true })
   }
