@@ -51,6 +51,8 @@ export default async function handler(req, res) {
         onboarding_done = COALESCE($26, onboarding_done),
         pergola_sqm_per_day = COALESCE($27, pergola_sqm_per_day),
         default_travel = COALESCE($28, default_travel),
+        market_price_pergola = COALESCE($29, market_price_pergola),
+        market_price_deck = COALESCE($30, market_price_deck),
         updated_at = now()
       WHERE clerk_id = $1
       RETURNING *
@@ -66,6 +68,8 @@ export default async function handler(req, res) {
       p.excluded_list ? JSON.stringify(p.excluded_list) : null,
       p.onboarding_done,
       p.pergola_sqm_per_day ?? null, p.default_travel ?? null,
+      // מחיר שוק לייחוס בלבד — לא משפיע על החישוב
+      p.market_price_pergola ?? null, p.market_price_deck ?? null,
     ])
     return res.json(rows[0])
   }

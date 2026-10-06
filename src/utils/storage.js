@@ -45,6 +45,8 @@ export function getProfile() {
     deck_days_alone: 3.5,          // דק 20 מ"ר לבד
     pergola_sqm_per_day: 16,       // קצב עבודה פרגולה (מ"ר ליום) — לבקשת הקבלן
     default_travel: 200,           // נסיעות ברירת מחדל להצעה
+    market_price_pergola: 650,     // מחיר שוק לפרגולה למ"ר לפני מע"מ — לייחוס בלבד
+    market_price_deck: null,       // מחיר שוק לדק — הקבלן מגדיר
   })
 }
 

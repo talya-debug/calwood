@@ -71,6 +71,8 @@ export default function NewQuote() {
     supplierDiscount: '', woodType: 'pine', direction: 'horizontal', baseType: 'concrete',
     stairs: '', supportBeam: false,
     // פרגולה: חלוקת מפתחים ידנית, חתכי קורות (ברירת מחדל 5x10), ומה עושים בקורה ארוכה מהמלאי
+    // מחיר למ"ר לפני מע"מ שהקבלן קובע בהצעה הזו. ריק = המחיר המחושב
+    pricePerSqm: '',
     spansText: '', supportMatId: DEFAULT_BEAM_ID, baseMatId: DEFAULT_BEAM_ID, roofMatId: DEFAULT_BEAM_ID, overLength: 'special',
   }))
   const [saved, setSaved] = useState(false)
@@ -136,7 +138,7 @@ export default function NewQuote() {
               { v: 'deck', l: 'דק', d: 'חישוב דקים, תשתיות וחיפויים', Icon: DeckIcon }].map(o => (
               <button key={o.v} onClick={() => {
                 // גובה ברירת מחדל לפי סוג עבודה — בדק הערך '3' (של פרגולה) לא תואם אף אפשרות, ולכן בטון לא חושב
-                if (o.v !== workType) setDim('height', o.v === 'deck' ? 'low' : '3')
+                if (o.v !== workType) { setDim('height', o.v === 'deck' ? 'low' : '3'); setDim('pricePerSqm', '') }
                 setWorkType(o.v); setStep(2)
               }}
                 className={`w-full p-5 rounded-2xl border-2 flex items-center gap-5 transition-all
@@ -437,9 +439,23 @@ export default function NewQuote() {
               <div className="bg-white rounded-2xl border border-[#e7e9e4] p-5">
                 {/* מחיר ראשי */}
                 <div className="flex items-start justify-between mb-4">
-                  <div className="text-left">
+                  <div className="text-left" data-price-per-sqm>
                     <div className="text-xs text-[#717971]">מחיר למ"ר <span className="font-bold">לפני מע"מ</span></div>
-                    <div className="text-lg font-bold text-[#414942]">{fmt(result.totals.pricePerSqm)}₪</div>
+                    <div className="flex items-center gap-1">
+                      <input type="number" value={dims.pricePerSqm !== '' ? dims.pricePerSqm : result.totals.calculatedPricePerSqm}
+                        onChange={e => setDim('pricePerSqm', e.target.value)}
+                        className={`w-24 h-9 px-2 border rounded-lg text-lg font-bold text-center outline-none focus:border-[#2d5a3d]
+                          ${result.totals.manualPrice ? 'border-[#C45D3E] text-[#C45D3E]' : 'border-[#c1c9c0] text-[#414942]'}`} />
+                      <span className="text-sm text-[#414942]">₪</span>
+                    </div>
+                    <div className="text-[11px] text-[#717971] mt-1 leading-snug">
+                      {result.totals.manualPrice
+                        ? <>מחושב: {fmt(result.totals.calculatedPricePerSqm)}₪ · <button onClick={() => setDim('pricePerSqm', '')} className="underline text-[#2d5a3d]">חזרה למחושב</button></>
+                        : 'מחושב — אפשר לשנות'}
+                      <span className="block">
+                        מחיר שוק: {result.totals.marketPricePerSqm ? `${fmt(result.totals.marketPricePerSqm)}₪` : 'לא הוגדר'} (לייחוס בלבד)
+                      </span>
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-[#717971]">סה"כ לתשלום <span className="font-bold">כולל מע"מ</span></div>

@@ -181,6 +181,11 @@ export default function Settings() {
             </div>
             <NumField label="הנחת ספק ברירת מחדל" suffix="%" value={profile.supplier_discount} onChange={v => updateProfile('supplier_discount', v)} />
             <NumField label="נסיעות — ברירת מחדל להצעה" suffix="&#8362;" value={profile.default_travel ?? 200} onChange={v => updateProfile('default_travel', v)} />
+            <div className="grid grid-cols-2 gap-4">
+              <NumField label='מחיר שוק פרגולה (למ"ר, לפני מע"מ)' suffix="&#8362;" value={profile.market_price_pergola ?? 650} onChange={v => updateProfile('market_price_pergola', v)} />
+              <NumField label='מחיר שוק דק (למ"ר, לפני מע"מ)' suffix="&#8362;" value={profile.market_price_deck ?? ''} onChange={v => updateProfile('market_price_deck', v)} />
+            </div>
+            <p className="text-xs text-[#717971] -mt-2">מחיר שוק מוצג ליד המחיר למ"ר בכל הצעה, לייחוס בלבד. לא משנה את החישוב ולא נאכף.</p>
             <p className="text-xs text-[#717971] -mt-2">נסיעות, רווח ומרווח ביטחון — אפשר לשנות בכל הצעה בנפרד.</p>
             <p className="text-xs text-[#717971] bg-[#f3f4ef] rounded-lg p-3">
               תקורה = רכב, כלים, ביטוח. מרווח ביטחון = כיסוי אי-ודאויות. חישוב: (עלויות + תקורה) x ביטחון x רווח.

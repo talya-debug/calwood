@@ -184,7 +184,7 @@ function getDefaultProfile() {
     hourly_rate: 250, helper_daily: 900, overhead_pct: 5, profit_pct: 20, safety_pct: 5,
     supplier_discount: 0, pergola_days_with_helper: 3, pergola_days_alone: 5,
     deck_days_with_helper: 2, deck_days_alone: 3.5,
-    pergola_sqm_per_day: 16, default_travel: 200,
+    pergola_sqm_per_day: 16, default_travel: 200, market_price_pergola: 650, market_price_deck: null,
     logo_url: '', brand_color: '#2d5a3d', quote_title: 'הצעת מחיר',
     payment_terms: '', warranty_text: '', validity_text: '',
     included_list: ['חומרים', 'עבודה', 'הובלה לאתר', 'שימון/לכה', 'בסיסי בטון'],

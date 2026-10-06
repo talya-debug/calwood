@@ -2,6 +2,42 @@
  * "איך הגענו למחיר" — פירוק המחיר לשלבים, מתוך אותם מספרים שהמנוע חישב
  * kind: 'item' = שורה רגילה, 'subtotal' = סיכום ביניים, 'total' = סה"כ
  */
+/**
+ * מחיר למ"ר שהקבלן קבע בהצעה (לפני מע"מ). ריק = המחיר המחושב.
+ * המחיר הכולל = שטח × מחיר למ"ר. ההפרש מהמחושב מופיע כשורה נפרדת ב"איך הגענו למחיר".
+ * מחיר השוק לייחוס בלבד — לא נאכף.
+ */
+export function applyPricePerSqm(result, override, marketPrice) {
+  const t = result.totals
+  t.calculatedPricePerSqm = t.pricePerSqm
+  t.calculatedBeforeVat = t.beforeVat
+  t.marketPricePerSqm = Number(marketPrice) > 0 ? Number(marketPrice) : null
+  const p = Number(override)
+  if (!(override !== '' && override !== null && override !== undefined && p > 0 && result.area > 0)) {
+    t.priceAdjustment = 0
+    return result
+  }
+  const beforeVat = Math.round(result.area * p)
+  t.priceAdjustment = beforeVat - t.calculatedBeforeVat
+  t.beforeVat = beforeVat
+  t.vat = Math.round(beforeVat * 0.18)
+  t.total = beforeVat + t.vat
+  t.pricePerSqm = Math.round(p * 100) / 100
+  t.manualPrice = true
+
+  // מעדכנים את הפירוק: שורת התאמה לפני "מחיר לפני מע"מ", ואת סיכומי הסוף
+  const rows = result.breakdown || []
+  const i = rows.findIndex(r => r.label === 'מחיר לפני מע"מ')
+  if (i >= 0) {
+    rows.splice(i, 0, { kind: 'item', label: 'התאמה ידנית למחיר למ"ר', amount: t.priceAdjustment,
+      note: `מחושב ${t.calculatedPricePerSqm.toLocaleString('he-IL')} ₪/מ"ר → נקבע ${t.pricePerSqm.toLocaleString('he-IL')} ₪/מ"ר` })
+    rows[i + 1].amount = t.beforeVat
+  }
+  const vatRow = rows.find(r => r.label === 'מע"מ (18%)'); if (vatRow) vatRow.amount = t.vat
+  const totalRow = rows.find(r => r.kind === 'total'); if (totalRow) totalRow.amount = t.total
+  return result
+}
+
 export function buildBreakdown({ lineItems, totals, travel = 0, accessCost = 0, heightCost = 0,
   safetyPct = 0, profitPct = 0, overheadPct = 0 }) {
   const waste = lineItems.reduce((s, i) => s + (i.wasteCost || 0), 0)

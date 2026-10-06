@@ -3,7 +3,7 @@
  */
 import { getMaterials } from '../utils/storage'
 import { cutPlan, describeCutPlan, getStockLengths, fmtM, round2 } from './stock'
-import { buildBreakdown } from './breakdown'
+import { buildBreakdown, applyPricePerSqm } from './breakdown'
 
 // מרווח רגליים לאורך קורת תשתית (מ') — גם האורך המינימלי לחתיכת השלמה, כדי שכל חיבור ייפול על רגל
 const LEG_SPACING = 1.15
@@ -263,7 +263,8 @@ export function calculateDeck(dims, rules, materialsList, profile) {
     totalCosts, beforeVat: priceBeforeVat, vat, total: totalPrice, pricePerSqm, margin: MARGIN,
   }
 
-  return {
+  // מחיר למ"ר ידני (אם נקבע בהצעה) + מחיר שוק לייחוס בלבד (לדק אין ערך ברירת מחדל — הקבלן מגדיר)
+  return applyPricePerSqm({
     type: 'deck',
     dimensions: { width: W, length: L, height, woodType, direction, access, helperType, baseType, stairs, supportBeam },
     area,
@@ -279,7 +280,7 @@ export function calculateDeck(dims, rules, materialsList, profile) {
     totals,
     breakdown: buildBreakdown({ lineItems, totals, travel: travelCost, accessCost: costAccess,
       heightCost: costHeight, safetyPct, profitPct, overheadPct: profile.overhead_pct ?? 5 }),
-  }
+  }, dims.pricePerSqm, dims.marketPrice ?? profile.market_price_deck)
 }
 
 export { WOOD_TYPES }

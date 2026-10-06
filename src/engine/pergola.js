@@ -5,7 +5,10 @@
  * תומכים רצים לאורך W, קורות תשתית לאורך L (מעל התומכים), קורות גג לאורך W (מעל קורות התשתית).
  */
 import { getMaterials } from '../utils/storage'
-import { buildBreakdown } from './breakdown'
+import { buildBreakdown, applyPricePerSqm } from './breakdown'
+
+// מחיר שוק לפרגולה לפי הקבלן — 650 ₪ למ"ר לפני מע"מ. לייחוס בלבד, לא נאכף
+export const MARKET_PRICE_PERGOLA = 650
 import { cutPlan, describeCutPlan, getStockLengths, fmtM, round2 } from './stock'
 import { getBaseBeamSection, getSupportSection } from './engineering'
 
@@ -117,7 +120,9 @@ export function calculatePergola(dims, rules, materialsList, profile) {
   // מחשבים את האפשרות שנבחרה. אם יש קורה ארוכה מהמלאי — מחשבים גם את שתי האחרות להשוואת מחיר
   const chosen = computeVariant(dims, profile, overLength === 'post' ? 'special' : overLength, overLength === 'post')
   const probe = overLength === 'special' ? chosen : computeVariant(dims, profile, 'special', false)
-  if (!probe.engineering.overLength) return chosen
+  // מחיר למ"ר ידני (אם נקבע בהצעה) + מחיר שוק לייחוס — רק על האפשרות שנבחרה; האפשרויות מציגות מחיר מחושב
+  const finish = (r) => applyPricePerSqm(r, dims.pricePerSqm, dims.marketPrice ?? profile.market_price_pergola ?? MARKET_PRICE_PERGOLA)
+  if (!probe.engineering.overLength) return finish(chosen)
 
   const variants = {
     special: probe,
@@ -132,7 +137,7 @@ export function calculatePergola(dims, rules, materialsList, profile) {
   }))
   chosen.overLengthChoice = overLength
   chosen.engineering.overLength = probe.engineering.overLength
-  return chosen
+  return finish(chosen)
 }
 
 function computeVariant(dims, profile, overLengthMode, addPosts) {
